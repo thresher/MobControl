@@ -39,14 +39,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
 
 import com.WinSock.MobControl.Listeners.MobControlEntityListener;
-import com.WinSock.MobControl.Spawner.Creatures;
-import com.WinSock.MobControl.Spawner.SpawnerCreature;
+//import com.WinSock.MobControl.Spawner.Creatures;
+//import com.WinSock.MobControl.Spawner.SpawnerCreature;
 
 public class MobControlPlugin extends JavaPlugin {
 
 	private MobControlEntityListener entityListener = new MobControlEntityListener(this);
 	public Logger log = null;
-	public Creatures creatures = new Creatures();
+	//public Creatures creatures = new Creatures();
 
 	public void onDisable() {
 		PluginDescriptionFile pdfFile = this.getDescription();
@@ -245,7 +245,8 @@ public class MobControlPlugin extends JavaPlugin {
 				this);
 
 		// Scheduler
-		this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new SpawnerCreature(this, creatures), 0L, (long)creatures.getSpawnDelay());
+		// Remove this until fully working
+		//this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new SpawnerCreature(this, creatures), 0L, (long)creatures.getSpawnDelay());
 		getServer().getScheduler().scheduleSyncRepeatingTask(this,
 				new Runnable() {
 
