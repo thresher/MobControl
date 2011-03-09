@@ -1,11 +1,13 @@
 package com.WinSock.MobControl.Spawner;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Material;
+import org.bukkit.World.Environment;
 import org.bukkit.entity.CreatureType;
 
 import com.WinSock.MobControl.Spawner.CreatureInfo.CreatureNature;
@@ -41,6 +43,13 @@ public class Creatures {
 	
 	public Creatures()
 	{
+		Set<Material> spawnBAgro = new HashSet<Material>(Arrays.asList(Material.values()));
+		spawnBAgro.remove(Material.AIR);
+		spawnBAgro.remove(Material.COBBLESTONE_STAIRS);
+		spawnBAgro.remove(Material.WOOD_STAIRS);
+		spawnBAgro.remove(Material.FENCE);
+		spawnBAgro.remove(Material.STEP);
+		
 		// pig
 		pig.setEnabled(true);
 		pig.setAttackDamage(0);
@@ -53,10 +62,11 @@ public class Creatures {
 		pig.setMinSpawnHeight(0);
 		pig.setNatureDay(CreatureNature.PASSIVE);
 		pig.setNatureNight(CreatureNature.PASSIVE);
-		pig.addSpawnBlocks(Material.values());
+		pig.addSpawnBlock(Material.GRASS);
 		pig.setSpawnRate(70);
-		pig.setSpawnRoom(2);
+		pig.setSpawnRoom(0);
 		pig.setSpawnTime(SpawnTime.BOTH);
+		pig.setEnvironment(Environment.NORMAL);
 		creatureList.add(pig);
 		
 		// chicken
@@ -71,10 +81,11 @@ public class Creatures {
 		chicken.setMinSpawnHeight(0);
 		chicken.setNatureDay(CreatureNature.PASSIVE);
 		chicken.setNatureNight(CreatureNature.PASSIVE);
-		chicken.addSpawnBlocks(Material.values());
+		chicken.addSpawnBlock(Material.GRASS);
 		chicken.setSpawnRate(70);
 		chicken.setSpawnRoom(2);
 		chicken.setSpawnTime(SpawnTime.BOTH);
+		chicken.setEnvironment(Environment.NORMAL);
 		creatureList.add(chicken);
 		
 		// cow
@@ -89,10 +100,11 @@ public class Creatures {
 		cow.setMinSpawnHeight(0);
 		cow.setNatureDay(CreatureNature.PASSIVE);
 		cow.setNatureNight(CreatureNature.PASSIVE);
-		cow.addSpawnBlocks(Material.values());
+		cow.addSpawnBlock(Material.GRASS);
 		cow.setSpawnRate(70);
 		cow.setSpawnRoom(2);
 		cow.setSpawnTime(SpawnTime.BOTH);
+		cow.setEnvironment(Environment.NORMAL);
 		creatureList.add(cow);
 		
 		// squid
@@ -107,10 +119,11 @@ public class Creatures {
 		squid.setMinSpawnHeight(0);
 		squid.setNatureDay(CreatureNature.PASSIVE);
 		squid.setNatureNight(CreatureNature.PASSIVE);
-		squid.addSpawnBlocks(Material.values());
+		squid.addSpawnBlock(Material.WATER);
 		squid.setSpawnRate(70);
 		squid.setSpawnRoom(2);
 		squid.setSpawnTime(SpawnTime.BOTH);
+		squid.setEnvironment(Environment.NORMAL);
 		creatureList.add(squid);
 		
 		// sheep
@@ -125,10 +138,11 @@ public class Creatures {
 		sheep.setMinSpawnHeight(0);
 		sheep.setNatureDay(CreatureNature.PASSIVE);
 		sheep.setNatureNight(CreatureNature.PASSIVE);
-		sheep.addSpawnBlocks(Material.values());
+		sheep.addSpawnBlock(Material.GRASS);
 		sheep.setSpawnRate(70);
 		sheep.setSpawnRoom(2);
 		sheep.setSpawnTime(SpawnTime.BOTH);
+		sheep.setEnvironment(Environment.NORMAL);
 		creatureList.add(sheep);
 		
 		// pigzombie
@@ -143,10 +157,11 @@ public class Creatures {
 		pigZombie.setMinSpawnHeight(0);
 		pigZombie.setNatureDay(CreatureNature.NEUTRAL);
 		pigZombie.setNatureNight(CreatureNature.NEUTRAL);
-		pigZombie.addSpawnBlocks(Material.values());
+		pigZombie.addSpawnBlock(Material.NETHERRACK);
 		pigZombie.setSpawnRate(70);
 		pigZombie.setSpawnRoom(2);
 		pigZombie.setSpawnTime(SpawnTime.BOTH);
+		pigZombie.setEnvironment(Environment.NETHER);
 		creatureList.add(pigZombie);
 		
 		// spider
@@ -161,10 +176,11 @@ public class Creatures {
 		spider.setMinSpawnHeight(0);
 		spider.setNatureDay(CreatureNature.NEUTRAL);
 		spider.setNatureNight(CreatureNature.AGGRESSIVE);
-		spider.addSpawnBlocks(Material.values());
+		spider.setSpawnBlocks(spawnBAgro);
 		spider.setSpawnRate(70);
 		spider.setSpawnRoom(2);
 		spider.setSpawnTime(SpawnTime.BOTH);
+		spider.setEnvironment(Environment.NORMAL);
 		creatureList.add(spider);
 		
 		// zombie
@@ -179,10 +195,11 @@ public class Creatures {
 		zombie.setMinSpawnHeight(0);
 		zombie.setNatureDay(CreatureNature.AGGRESSIVE);
 		zombie.setNatureNight(CreatureNature.AGGRESSIVE);
-		zombie.addSpawnBlocks(Material.values());
+		zombie.setSpawnBlocks(spawnBAgro);
 		zombie.setSpawnRate(70);
 		zombie.setSpawnRoom(2);
 		zombie.setSpawnTime(SpawnTime.BOTH);
+		zombie.setEnvironment(Environment.NORMAL);
 		creatureList.add(zombie);
 		
 		// skeleton
@@ -197,10 +214,11 @@ public class Creatures {
 		skeleton.setMinSpawnHeight(0);
 		skeleton.setNatureDay(CreatureNature.AGGRESSIVE);
 		skeleton.setNatureNight(CreatureNature.AGGRESSIVE);
-		skeleton.addSpawnBlocks(Material.values());
+		skeleton.setSpawnBlocks(spawnBAgro);
 		skeleton.setSpawnRate(70);
 		skeleton.setSpawnRoom(2);
 		skeleton.setSpawnTime(SpawnTime.BOTH);
+		skeleton.setEnvironment(Environment.NORMAL);
 		creatureList.add(skeleton);
 		
 		// creeper
@@ -215,10 +233,11 @@ public class Creatures {
 		creeper.setMinSpawnHeight(0);
 		creeper.setNatureDay(CreatureNature.AGGRESSIVE);
 		creeper.setNatureNight(CreatureNature.AGGRESSIVE);
-		creeper.addSpawnBlocks(Material.values());
+		creeper.setSpawnBlocks(spawnBAgro);
 		creeper.setSpawnRate(70);
 		creeper.setSpawnRoom(2);
 		creeper.setSpawnTime(SpawnTime.BOTH);
+		creeper.setEnvironment(Environment.NORMAL);
 		creatureList.add(creeper);
 		
 		// slime
@@ -233,10 +252,11 @@ public class Creatures {
 		slime.setMinSpawnHeight(0);
 		slime.setNatureDay(CreatureNature.AGGRESSIVE);
 		slime.setNatureNight(CreatureNature.AGGRESSIVE);
-		slime.addSpawnBlocks(Material.values());
+		slime.setSpawnBlocks(spawnBAgro);
 		slime.setSpawnRate(70);
 		slime.setSpawnRoom(2);
 		slime.setSpawnTime(SpawnTime.BOTH);
+		slime.setEnvironment(Environment.NORMAL);
 		creatureList.add(slime);
 		
 		// ghast
@@ -251,10 +271,11 @@ public class Creatures {
 		ghast.setMinSpawnHeight(0);
 		ghast.setNatureDay(CreatureNature.AGGRESSIVE);
 		ghast.setNatureNight(CreatureNature.AGGRESSIVE);
-		ghast.addSpawnBlocks(Material.values());
+		ghast.addSpawnBlock(Material.AIR);
 		ghast.setSpawnRate(70);
 		ghast.setSpawnRoom(2);
 		ghast.setSpawnTime(SpawnTime.BOTH);
+		ghast.setEnvironment(Environment.NETHER);
 		creatureList.add(ghast);
 	}
 	

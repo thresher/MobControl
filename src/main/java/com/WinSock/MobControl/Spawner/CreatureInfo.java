@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.bukkit.Material;
+import org.bukkit.World.Environment;
 import org.bukkit.entity.CreatureType;
 
 public class CreatureInfo {
@@ -26,6 +27,7 @@ public class CreatureInfo {
 	private int attackDamage;
 	private SpawnTime spawnTime;
 	private boolean enabled;
+	private Environment environment;
 	
 	public void setCreature(CreatureType creature) {
 		this.creature = creature;
@@ -122,5 +124,11 @@ public class CreatureInfo {
 	}
 	public boolean isEnabled() {
 		return enabled;
+	}
+	public void setEnvironment(Environment environment) {
+		this.environment = environment;
+	}
+	public Environment getEnvironment() {
+		return environment;
 	}
 }

@@ -32,146 +32,6 @@ public class SpawnerCreature implements Runnable{
 		this.creatures = creatures;
 	}
 	
-	public Set<Creature> spawnMobPack(Block spawnBlock, CreatureInfo spawnCreature, World world)
-	{
-		Set<Location> spawnLocations = getMobSpawnLocations(spawnBlock, world);
-		Set<Creature> returnData = new HashSet<Creature>();
-		
-		Iterator<Location> it = spawnLocations.iterator();
-		checkloop: while(it.hasNext())
-		{
-			Location loc = it.next();
-			int x = loc.getBlockX();
-			int y = loc.getBlockY();
-			int z = loc.getBlockZ();
-
-			for (LivingEntity e : world.getLivingEntities())
-			{
-				if (e instanceof Creature)
-				{
-					if (e.getLocation().getBlock() == loc.getBlock())
-					{
-						it.remove();
-						continue checkloop;
-					}
-				}
-				else if (e instanceof HumanEntity)
-				{
-					int deltax = Math.abs(e.getLocation().getBlockX()-loc.getBlockX());
-					int deltay = Math.abs(e.getLocation().getBlockY()-loc.getBlockY());
-					int deltaz = Math.abs(e.getLocation().getBlockZ()-loc.getBlockZ());
-					double distance = Math.sqrt((deltax*deltax)+(deltay*deltay)+(deltaz*deltaz));
-					
-					if (distance < creatures.getDistanceFromPlayer())
-					{
-						it.remove();
-						continue checkloop;
-					}
-				}
-			}
-			for(int i = 0; i < spawnCreature.getSpawnRoom(); i++)
-			{
-				if(world.getBlockAt(x, y + i, z).getType() != Material.AIR)
-				{
-					it.remove();
-					continue checkloop;
-				}
-			}
-			for (Material m : spawnCreature.getSpawnBlocks())
-			{
-				if (world.getBlockAt(x, y - 1, z).getType() != m)
-				{
-					it.remove();
-					continue checkloop;
-				}
-			}
-			
-			if (plugin.isDay(world))
-			{
-				switch (spawnCreature.getNatureDay())
-				{
-					case AGGRESSIVE:
-						int maxLight = rand.nextInt(spawnCreature.getMaxLight());
-						if (loc.getBlock().getLightLevel() < spawnCreature.getMinLight())
-						{
-							it.remove();
-							continue checkloop;
-						}
-						else if (loc.getBlock().getLightLevel() > maxLight)
-						{
-							it.remove();
-							continue checkloop;
-						}
-						break;
-					default:
-						if (loc.getBlock().getLightLevel() < spawnCreature.getMinLight())
-						{
-							it.remove();
-							continue checkloop;
-						}
-						else if (loc.getBlock().getLightLevel() > spawnCreature.getMaxLight())
-						{
-							it.remove();
-							continue checkloop;
-						}
-						break;
-				}
-			}
-			else
-			{
-				switch (spawnCreature.getNatureNight())
-				{
-					case AGGRESSIVE:
-						int maxLight = rand.nextInt(spawnCreature.getMaxLight());
-						if (loc.getBlock().getLightLevel() < spawnCreature.getMinLight())
-						{
-							it.remove();
-							continue checkloop;
-						}
-						else if (loc.getBlock().getLightLevel() > maxLight)
-						{
-							it.remove();
-							continue checkloop;
-						}
-						break;
-					default:
-						if (loc.getBlock().getLightLevel() < spawnCreature.getMinLight())
-						{
-							it.remove();
-							continue checkloop;
-						}
-						else if (loc.getBlock().getLightLevel() > spawnCreature.getMaxLight())
-						{
-							it.remove();
-							continue checkloop;
-						}
-						break;
-				}
-			}
-			
-			if (loc.getBlockY() > spawnCreature.getMaxSpawnHeight())
-			{
-				it.remove();
-				continue checkloop;
-			}
-			if (loc.getBlockY() < spawnCreature.getMinSpawnHeight())
-			{
-				it.remove();
-				continue checkloop;
-			}
-		}
-		
-		for (Location loc : spawnLocations)
-		{
-			Creature c = loc.getWorld().spawnCreature(loc, spawnCreature.getCreature());
-			returnData.add(c);
-			System.out.println("SPAWN");
-			
-		}
-		
-		return returnData;
-	}
-	
 	private Set<World> getActiveWorlds()
 	{
 		Set<World> returnData = new HashSet<World>();
@@ -216,36 +76,6 @@ public class SpawnerCreature implements Runnable{
 		return null;
 	}
 	
-	private Set<Location> getMobSpawnLocations(Block mobPackLocation, World world)
-	{
-		double x = mobPackLocation.getLocation().getX();
-		double y = mobPackLocation.getLocation().getY();
-		double z = mobPackLocation.getLocation().getZ();
-		
-		Set<Location> returnData = new HashSet<Location>();
-		for (int i = 0; i < 12; i++)
-		{
-			int[] numbers = {rand.nextInt(3), rand.nextInt(3)};
-			
-			for (int i1 = 0; i1 < 7; i1++)
-			{
-				switch(rand.nextInt(2))
-				{
-					case 0:
-						returnData.add(new Location(world, x + numbers[0], y, z));
-						break;
-					case 1:
-						returnData.add(new Location(world, x, y, z + numbers[1]));
-						break;
-					case 2:
-						returnData.add(new Location(world, x + numbers[0], y, z + numbers[1]));
-						break;
-				}
-			}
-		}
-		return returnData;
-	}
-	
 	private CreatureInfo getRandPassiveCreature(World world)
 	{
 		if (plugin.isDay(world))
@@ -270,6 +100,122 @@ public class SpawnerCreature implements Runnable{
 			else
 			{
 				return null;
+			}
+		}
+	}
+	
+	private void spawnMobs(List<Block> blocks, CreatureInfo cInfo, World world)
+	{
+		Set<Block> blocksToSpawn = new HashSet<Block>();
+		
+		for (int i = 0; i < 500; i++)
+		{
+			blocksToSpawn.add(blocks.get(rand.nextInt(blocks.size())));
+		}
+		
+		Iterator<Block> it = blocksToSpawn.iterator();
+		checkloop: while(it.hasNext())
+		{
+			Block block = it.next();
+			
+			if (world.getEnvironment() != cInfo.getEnvironment())
+			{
+				continue checkloop;
+			}
+
+			for (LivingEntity e : world.getLivingEntities())
+			{
+				if (e instanceof Creature)
+				{
+					if (e.getLocation().getBlock() == block)
+					{
+						continue checkloop;
+					}
+				}
+				else if (e instanceof HumanEntity)
+				{
+					int deltax = Math.abs(e.getLocation().getBlockX()-block.getX());
+					int deltay = Math.abs(e.getLocation().getBlockY()-block.getY());
+					int deltaz = Math.abs(e.getLocation().getBlockZ()-block.getZ());
+					double distance = Math.sqrt((deltax*deltax)+(deltay*deltay)+(deltaz*deltaz));
+					
+					if (distance < creatures.getDistanceFromPlayer())
+					{
+						continue checkloop;
+					}
+				}
+			}
+			for(int i = 0; i < cInfo.getSpawnRoom(); i++)
+			{
+				Location blockLoc = new Location(world, block.getX(), block.getY() + i, block.getZ());
+				if(world.getBlockAt(blockLoc).getType() != Material.AIR)
+				{
+					continue checkloop;
+				}
+			}
+			Location blockLoc = new Location(world, block.getX(), block.getY() - 1, block.getZ());
+			if (!cInfo.getSpawnBlocks().contains(world.getBlockAt(blockLoc).getType()))
+			{
+				continue checkloop;
+			}
+			
+			if (plugin.isDay(world))
+			{
+				switch (cInfo.getNatureDay())
+				{
+					case AGGRESSIVE:
+						int maxLight = rand.nextInt(cInfo.getMaxLight());
+						if (block.getLightLevel() < cInfo.getMinLight())
+						{
+							continue checkloop;
+						}
+						else if (block.getLightLevel() > maxLight)
+						{
+							continue checkloop;
+						}
+						break;
+					default:
+						if (block.getLightLevel() < cInfo.getMinLight())
+						{
+							continue checkloop;
+						}
+						else if (block.getLightLevel() > cInfo.getMaxLight())
+						{
+							continue checkloop;
+						}
+						break;
+				}
+			}
+			else
+			{
+				switch (cInfo.getNatureNight())
+				{
+					case AGGRESSIVE:
+						int maxLight = rand.nextInt(cInfo.getMaxLight());
+						if (block.getLightLevel() < cInfo.getMinLight())
+						{
+							continue checkloop;
+						}
+						else if (block.getLightLevel() > maxLight)
+						{
+							continue checkloop;
+						}
+						break;
+					default:
+						if (block.getLightLevel() < cInfo.getMinLight())
+						{
+							continue checkloop;
+						}
+						else if (block.getLightLevel() > cInfo.getMaxLight())
+						{
+							continue checkloop;
+						}
+						break;
+				}
+			}
+			if (rand.nextInt(100) <= cInfo.getSpawnRate())
+			{
+				world.spawnCreature(block.getLocation(), cInfo.getCreature());
 			}
 		}
 	}
@@ -308,50 +254,34 @@ public class SpawnerCreature implements Runnable{
 		Set<World> worlds = getActiveWorlds();
 		for (World w : worlds)
 		{
-		Set<Chunk> chunkSet = getChunks(w);
-		
-		Chunk spawnChunk = getRandChunk(chunkSet);
-		if (spawnChunk != null)
-		{
+			Set<Chunk> chunkSet = getChunks(w);
 			CreatureInfo spawnPassive = getRandPassiveCreature(w);
 			CreatureInfo spawnAggressive = getRandHostileCreature(w);
+			
 			if (spawnPassive != null || spawnAggressive != null)
 			{
-				// Enough space for one chunk worth of blocks.
 				List<Block> blocks= new ArrayList<Block>();
 
-				for (int y = 0; y < 128; y++) {
-				    for (int x = 0; x < 16; x++) {
-				        for (int z = 0; z < 16; z++) {
-				            blocks.add(spawnChunk.getBlock(x, y, z));
-				        }
-				    }
-				}
-				
-				Block spawnPassiveBlock = blocks.get(rand.nextInt(blocks.size()));
-				while (spawnPassiveBlock.getType() != Material.AIR)
+				for (Chunk c : chunkSet)
 				{
-					spawnPassiveBlock = blocks.get(rand.nextInt(blocks.size()));
+					for (int y = 0; y < 128; y++) {
+						for (int x = 0; x < 16; x++) {
+							for (int z = 0; z < 16; z++) {
+								blocks.add(c.getBlock(x, y, z));
+							}
+						}
+					}
 				}
-				
-				Block spawnAggressiveBlock = blocks.get(rand.nextInt(blocks.size()));
-				while (spawnAggressiveBlock.getType() != Material.AIR)
-				{
-					spawnAggressiveBlock = blocks.get(rand.nextInt(blocks.size()));
-				}
-				
+					
 				if (spawnPassive != null)
 				{
-					System.out.println("TRY: "+spawnPassive.getCreature().getName());
-					spawnMobPack(spawnPassiveBlock, spawnPassive, w);
+					spawnMobs(blocks, spawnPassive, w);
 				}
 				if (spawnAggressive != null)
 				{
-					System.out.println("TRY: "+spawnAggressive.getCreature().getName());
-					spawnMobPack(spawnAggressiveBlock, spawnAggressive, w);
+					spawnMobs(blocks, spawnAggressive, w);
 				}
 			}
 		}
-	}
 	}
 }

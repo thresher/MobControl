@@ -20,7 +20,6 @@ import org.bukkit.entity.Flying;
 import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Giant;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.MobType;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Pig;
 import org.bukkit.entity.PigZombie;
@@ -408,8 +407,8 @@ public class MobControlPlugin extends JavaPlugin {
 		}
 	}
 
-	public MobType findType(String mob) {
-		for (MobType mobtype : MobType.values()) {
+	public CreatureType findType(String mob) {
+		for (CreatureType mobtype : CreatureType.values()) {
 			if (mobtype.name().equalsIgnoreCase(mob))
 				return mobtype;
 			else if (mobtype.name().replaceAll("_", "").equalsIgnoreCase(mob))

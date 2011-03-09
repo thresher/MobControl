@@ -7,7 +7,6 @@ import org.bukkit.entity.Creature;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.MobType;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -168,7 +167,7 @@ public class MobControlEntityListener extends EntityListener {
 
 	@Override
 	public void onCreatureSpawn(CreatureSpawnEvent event) {
-		MobType mobType = event.getMobType();
+		CreatureType mobType = event.getCreatureType();
 
 		String enabledNode = "MobControl.Mobs."
 				+ mobType.getName().toUpperCase() + ".Enabled";
