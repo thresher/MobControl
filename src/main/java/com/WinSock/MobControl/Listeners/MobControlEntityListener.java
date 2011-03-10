@@ -18,6 +18,7 @@ import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityTargetEvent.TargetReason;
 
 import com.WinSock.MobControl.MobControlPlugin;
+import com.WinSock.MobControl.Spawner.CreatureInfo;
 
 public class MobControlEntityListener extends EntityListener {
 	private final MobControlPlugin plugin;
@@ -40,11 +41,9 @@ public class MobControlEntityListener extends EntityListener {
 	public void onEntityCombust(EntityCombustEvent event) {
 		CreatureType cType = plugin.getCreatureType(event.getEntity());
 		if (cType != null) {
-
-			String burnNode = "MobControl.Mobs."
-					+ cType.getName().toUpperCase() + ".Day.Burn";
-
-			if (!plugin.getConfiguration().getBoolean(burnNode, false)) {
+			CreatureInfo cInfo = plugin.creaturesHandler.get(
+					event.getEntity().getWorld()).get(cType);
+			if (!cInfo.isBurn()) {
 				event.setCancelled(true);
 			}
 		}
@@ -56,14 +55,12 @@ public class MobControlEntityListener extends EntityListener {
 			EntityDamageByEntityEvent dmgByEntity = (EntityDamageByEntityEvent) event;
 			CreatureType cType = plugin.getCreatureType(event.getEntity());
 			if (cType != null) {
-				if (event.getEntity().getLocation().getWorld().getTime() < 12000
-						|| event.getEntity().getLocation().getWorld().getTime() == 24000) {
-					String natureLightNode = "MobControl.Mobs."
-							+ cType.getName().toUpperCase() + ".Day.Nature";
-					String data = plugin.getConfiguration().getString(
-							natureLightNode);
-					if (plugin.shouldTarget(event.getEntity(), data, true)) {
-						Creature c = (Creature) event.getEntity();
+				CreatureInfo cInfo = plugin.creaturesHandler.get(
+						event.getEntity().getWorld()).get(cType);
+				if (plugin.isDay(event.getEntity().getWorld())) {
+					if (plugin.shouldTarget(event.getEntity(),
+							cInfo.getNatureDay(), true)) {
+						Creature c = (Creature) dmgByEntity.getEntity();
 						if (dmgByEntity.getDamager() instanceof LivingEntity) {
 							c.setTarget((LivingEntity) dmgByEntity.getDamager());
 							if (!attacked.contains(c)) {
@@ -72,11 +69,8 @@ public class MobControlEntityListener extends EntityListener {
 						}
 					}
 				} else {
-					String natureNightNode = "MobControl.Mobs."
-							+ cType.getName().toUpperCase() + ".Night.Nature";
-					String data = plugin.getConfiguration().getString(
-							natureNightNode);
-					if (plugin.shouldTarget(event.getEntity(), data, true)) {
+					if (plugin.shouldTarget(event.getEntity(),
+							cInfo.getNatureNight(), true)) {
 						Creature c = (Creature) event.getEntity();
 						if (dmgByEntity.getDamager() instanceof LivingEntity) {
 							c.setTarget((LivingEntity) dmgByEntity.getDamager());
@@ -92,42 +86,57 @@ public class MobControlEntityListener extends EntityListener {
 
 	@Override
 	public void onEntityTarget(EntityTargetEvent event) {
-		if (event.getReason() == TargetReason.FORGOT_TARGET
-				|| event.getReason() == TargetReason.TARGET_DIED) {
-			if (event.getEntity() instanceof Creature) {
-				Creature c = (Creature) event.getEntity();
-				attacked.remove(c);
-			}
-		} else if (event.getReason() == TargetReason.TARGET_ATTACKED_ENTITY) {
-			if (event.getEntity() instanceof Creature) {
-				Creature c = (Creature) event.getEntity();
-				if (!attacked.contains(c)) {
-					attacked.add(c);
+		CreatureType cType = plugin.getCreatureType(event.getEntity());
+		if (cType != null) {
+			CreatureInfo cInfo = plugin.creaturesHandler.get(
+					event.getEntity().getWorld()).get(cType);
+			if (event.getReason() == TargetReason.FORGOT_TARGET
+					|| event.getReason() == TargetReason.TARGET_DIED) {
+				if (event.getEntity() instanceof Creature) {
+					Creature c = (Creature) event.getEntity();
+					attacked.remove(c);
 				}
-			}
-		} else if (!(event.getReason() == TargetReason.CUSTOM)) {
-			CreatureType cType = plugin.getCreatureType(event.getEntity());
-			if (cType != null) {
-				if (event.getEntity().getLocation().getWorld().getTime() < 12000
-						|| event.getEntity().getLocation().getWorld().getTime() == 24000) {
-					String natureLightNode = "MobControl.Mobs."
-							+ cType.getName().toUpperCase() + ".Day.Nature";
-					String data = plugin.getConfiguration().getString(
-							natureLightNode);
+			} else if (event.getReason() == TargetReason.TARGET_ATTACKED_ENTITY) {
+				if (event.getEntity() instanceof Creature) {
 					Creature c = (Creature) event.getEntity();
-					if (!plugin.shouldTarget(event.getEntity(), data,
-							attacked.contains(c))) {
-						event.setCancelled(true);
+					if (!attacked.contains(c)) {
+						if (plugin.isDay(event.getEntity().getWorld())) {
+							if (plugin.shouldTarget(event.getEntity(),
+									cInfo.getNatureDay(), true)) {
+								attacked.add(c);
+							}
+							else
+							{
+								event.setCancelled(true);
+							}
+						}
+						else
+						{
+							if (plugin.shouldTarget(event.getEntity(),
+									cInfo.getNatureNight(), true)) {
+								attacked.add(c);
+							}
+							else
+							{
+								event.setCancelled(true);
+							}
+						}
 					}
-				} else {
-					String natureNightNode = "MobControl.Mobs."
-							+ cType.getName().toUpperCase() + ".Night.Nature";
-					String data = plugin.getConfiguration().getString(
-							natureNightNode);
-					Creature c = (Creature) event.getEntity();
-					if (!plugin.shouldTarget(event.getEntity(), data,
-							attacked.contains(c))) {
-						event.setCancelled(true);
+				}
+			} else if (!(event.getReason() == TargetReason.CUSTOM)) {
+				if (cType != null) {
+					if (plugin.isDay(event.getEntity().getWorld())) {
+						Creature c = (Creature) event.getEntity();
+						if (!plugin.shouldTarget(event.getEntity(),
+								cInfo.getNatureDay(), attacked.contains(c))) {
+							event.setCancelled(true);
+						}
+					} else {
+						Creature c = (Creature) event.getEntity();
+						if (!plugin.shouldTarget(event.getEntity(),
+								cInfo.getNatureNight(), attacked.contains(c))) {
+							event.setCancelled(true);
+						}
 					}
 				}
 			}
@@ -138,26 +147,19 @@ public class MobControlEntityListener extends EntityListener {
 	public void onEntityExplode(EntityExplodeEvent event) {
 		CreatureType cType = plugin.getCreatureType(event.getEntity());
 		if (cType != null) {
+			CreatureInfo cInfo = plugin.creaturesHandler.get(
+					event.getEntity().getWorld()).get(cType);
 			if (cType == CreatureType.CREEPER) {
-				if (event.getEntity().getLocation().getWorld().getTime() < 12000
-						|| event.getEntity().getLocation().getWorld().getTime() == 24000) {
-					String natureLightNode = "MobControl.Mobs."
-							+ cType.getName().toUpperCase() + ".Day.Nature";
-					String data = plugin.getConfiguration().getString(
-							natureLightNode);
+				if (plugin.isDay(event.getEntity().getWorld())) {
 					Creature c = (Creature) event.getEntity();
-					if (!plugin.shouldTarget(event.getEntity(), data,
-							attacked.contains(c))) {
+					if (!plugin.shouldTarget(event.getEntity(),
+							cInfo.getNatureDay(), attacked.contains(c))) {
 						event.setCancelled(true);
 					}
 				} else {
-					String natureNightNode = "MobControl.Mobs."
-							+ cType.getName().toUpperCase() + ".Night.Nature";
-					String data = plugin.getConfiguration().getString(
-							natureNightNode);
 					Creature c = (Creature) event.getEntity();
-					if (!plugin.shouldTarget(event.getEntity(), data,
-							attacked.contains(c))) {
+					if (!plugin.shouldTarget(event.getEntity(),
+							cInfo.getNatureNight(), attacked.contains(c))) {
 						event.setCancelled(true);
 					}
 				}
@@ -167,34 +169,24 @@ public class MobControlEntityListener extends EntityListener {
 
 	@Override
 	public void onCreatureSpawn(CreatureSpawnEvent event) {
-		CreatureType mobType = event.getCreatureType();
-
-		String enabledNode = "MobControl.Mobs."
-				+ mobType.getName().toUpperCase() + ".Enabled";
-		String burnNode = "MobControl.Mobs." + mobType.getName().toUpperCase()
-				+ ".Day.Burn";
-		String spawnHeightNode = "MobControl.Mobs."
-				+ mobType.getName().toUpperCase() + ".SpawnHeight";
-		String spawnChanceNode = "MobControl.Mobs."
-				+ mobType.getName().toUpperCase() + ".SpawnChance";
-
-		if (!plugin.canSpawn(event.getLocation(), plugin.getConfiguration()
-				.getInt(spawnHeightNode, 0), plugin.getConfiguration()
-				.getBoolean(enabledNode, true), plugin.getConfiguration()
-				.getInt(spawnChanceNode, 100))) {
-			event.setCancelled(true);
-		} else if (plugin.getConfiguration().getBoolean(burnNode, false)) {
-			if (event.getLocation().getWorld().getTime() < 12000
-					|| event.getLocation().getWorld().getTime() == 24000) {
-				if (event
-						.getLocation()
-						.getWorld()
-						.getBlockAt(event.getLocation().getBlockX(),
-								event.getLocation().getBlockY() + 1,
-								event.getLocation().getBlockZ())
-						.getLightLevel() > 7) {
-					Entity e = event.getEntity();
-					e.setFireTicks(20);
+		CreatureType cType = plugin.getCreatureType(event.getEntity());
+		if (cType != null) {
+			CreatureInfo cInfo = plugin.creaturesHandler.get(
+					event.getEntity().getWorld()).get(cType);
+			if (!plugin.canSpawn(event.getLocation(), cInfo, 100)) {
+				event.setCancelled(true);
+			} else if (cInfo.isBurn()) {
+				if (plugin.isDay(event.getEntity().getWorld()) && plugin.canSeeSky(event.getLocation())) {
+					if (event
+							.getLocation()
+							.getWorld()
+							.getBlockAt(event.getLocation().getBlockX(),
+									event.getLocation().getBlockY() + 1,
+									event.getLocation().getBlockZ())
+							.getLightLevel() > 7) {
+						Entity e = event.getEntity();
+						e.setFireTicks(20);
+					}
 				}
 			}
 		}

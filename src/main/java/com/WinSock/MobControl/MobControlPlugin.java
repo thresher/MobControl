@@ -38,32 +38,38 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
 
 import com.WinSock.MobControl.Listeners.MobControlEntityListener;
-//import com.WinSock.MobControl.Spawner.Creatures;
 //import com.WinSock.MobControl.Spawner.SpawnerCreature;
+import com.WinSock.MobControl.Spawner.CreatureInfo;
+import com.WinSock.MobControl.Spawner.CreatureNature;
+import com.WinSock.MobControl.Spawner.CreaturesHandler;
+import com.WinSock.MobControl.Spawner.SpawnTime;
 
 public class MobControlPlugin extends JavaPlugin {
 
-	private MobControlEntityListener entityListener = new MobControlEntityListener(this);
+	private MobControlEntityListener entityListener = new MobControlEntityListener(
+			this);
 	public Logger log = null;
-	//public Creatures creatures = new Creatures();
+	private PluginDescriptionFile pdfFile;
+	private Defaults defaults = new Defaults();
+	public CreaturesHandler creaturesHandler = new CreaturesHandler(this);
 
 	public void onDisable() {
-		PluginDescriptionFile pdfFile = this.getDescription();
 		log.info("[" + pdfFile.getName() + "] Version " + pdfFile.getVersion()
 				+ " is disabled!");
 	}
 
-	public boolean shouldTarget(Entity e, String nodeData, boolean attacked) {
-		if (nodeData != null) {
-			if (nodeData.equalsIgnoreCase("Passive")) {
+	public boolean shouldTarget(Entity e, CreatureNature creatureNature,
+			boolean attacked) {
+		if (creatureNature != null) {
+			if (creatureNature == CreatureNature.PASSIVE) {
 				return false;
-			} else if (nodeData.equalsIgnoreCase("Neutral")) {
+			} else if (creatureNature == CreatureNature.NEUTRAL) {
 				if (attacked) {
 					return true;
 				} else {
 					return false;
 				}
-			} else if (nodeData.equalsIgnoreCase("Aggressive")) {
+			} else if (creatureNature == CreatureNature.AGGRESSIVE) {
 				return true;
 			}
 		}
@@ -75,8 +81,7 @@ public class MobControlPlugin extends JavaPlugin {
 	}
 
 	public boolean shouldBurn(Location loc) {
-		if (loc.getWorld().getTime() < 12000
-				|| loc.getWorld().getTime() == 24000) {
+		if (isDay(loc.getWorld())) {
 			if (loc.getWorld()
 					.getBlockAt(loc.getBlockX(), loc.getBlockY() + 1,
 							loc.getBlockZ()).getLightLevel() > 7) {
@@ -102,11 +107,9 @@ public class MobControlPlugin extends JavaPlugin {
 		}
 		return false;
 	}
-	
-	public boolean isDay(World world)
-	{
-		return world.getTime() < 12000
-		|| world.getTime() == 24000;
+
+	public boolean isDay(World world) {
+		return world.getTime() < 12000 || world.getTime() == 24000;
 	}
 
 	public boolean okBlock(Block block) {
@@ -131,39 +134,131 @@ public class MobControlPlugin extends JavaPlugin {
 		}
 	}
 
-	public int getNumberOfCreatures(Location loc) {
+	public int getNumberOfCreatures(Location loc, CreatureNature nature) {
 		int creatures = 0;
 		for (Entity e : loc.getWorld().getEntities()) {
 			if (e instanceof Creature) {
-				creatures++;
+				if (isDay(loc.getWorld())) {
+					switch (nature) {
+					case PASSIVE:
+						if (creaturesHandler.get(loc.getWorld())
+								.get(getCreatureType(e)).getNatureDay() == CreatureNature.PASSIVE) {
+							creatures++;
+						}
+
+					case AGGRESSIVE:
+						if (creaturesHandler.get(loc.getWorld())
+								.get(getCreatureType(e)).getNatureDay() == CreatureNature.AGGRESSIVE) {
+							creatures++;
+						}
+						break;
+
+					case NEUTRAL:
+						if (creaturesHandler.get(loc.getWorld())
+								.get(getCreatureType(e)).getNatureDay() == CreatureNature.NEUTRAL) {
+							creatures++;
+						}
+						break;
+					}
+				} else {
+					switch (nature) {
+					case PASSIVE:
+						if (creaturesHandler.get(loc.getWorld())
+								.get(getCreatureType(e)).getNatureNight() == CreatureNature.PASSIVE) {
+							creatures++;
+						}
+						break;
+
+					case AGGRESSIVE:
+						if (creaturesHandler.get(loc.getWorld())
+								.get(getCreatureType(e)).getNatureNight() == CreatureNature.AGGRESSIVE) {
+							creatures++;
+						}
+						break;
+
+					case NEUTRAL:
+						if (creaturesHandler.get(loc.getWorld())
+								.get(getCreatureType(e)).getNatureNight() == CreatureNature.NEUTRAL) {
+							creatures++;
+						}
+						break;
+					}
+				}
 			}
 		}
 		return creatures;
 	}
 
-	public boolean canSpawn(Location spawnLoc, int spawnHeight,
-			boolean enabled, int precent) {
-		String maxNode = "MobControl.Mobs.Max";
-		int maxMobs = this.getConfiguration().getInt(maxNode, 0);
-		if (enabled) {
-			if (maxMobs == 0 || getNumberOfCreatures(spawnLoc) < maxMobs) {
-				if (spawnHeight != 0) {
-					if (spawnLoc.getBlockY() > spawnHeight) {
-						if (spawnChance(precent)) {
-							return true;
-						} else {
-							return false;
-						}
-					} else {
+	public boolean canSpawn(Location spawnLoc, CreatureInfo cInfo, int precent) {
+		if (cInfo.isEnabled()) {
+			if (isDay(cInfo.getWorld())) {
+				switch (cInfo.getNatureDay()) {
+				case PASSIVE:
+					if (creaturesHandler.get(cInfo.getWorld()).getMaxPassive() < getNumberOfCreatures(
+							spawnLoc, CreatureNature.PASSIVE)) {
 						return false;
 					}
-				} else {
-					if (spawnChance(precent)) {
-						return true;
-					} else {
+					break;
+				case AGGRESSIVE:
+					if (creaturesHandler.get(cInfo.getWorld()).getMaxHostile() < getNumberOfCreatures(
+							spawnLoc, CreatureNature.AGGRESSIVE)) {
 						return false;
 					}
+					break;
+				case NEUTRAL:
+					if (creaturesHandler.get(cInfo.getWorld()).getMaxNeutral() < getNumberOfCreatures(
+							spawnLoc, CreatureNature.NEUTRAL)) {
+						return false;
+					}
+					break;
 				}
+				if (cInfo.getSpawnTime() != SpawnTime.DAY
+						|| cInfo.getSpawnTime() != SpawnTime.BOTH) {
+					return false;
+				}
+			} else {
+				switch (cInfo.getNatureDay()) {
+				case PASSIVE:
+					if (creaturesHandler.get(cInfo.getWorld()).getMaxPassive() < getNumberOfCreatures(
+							spawnLoc, CreatureNature.PASSIVE)) {
+						return false;
+					}
+					break;
+				case AGGRESSIVE:
+					if (creaturesHandler.get(cInfo.getWorld()).getMaxHostile() < getNumberOfCreatures(
+							spawnLoc, CreatureNature.AGGRESSIVE)) {
+						return false;
+					}
+					break;
+				case NEUTRAL:
+					if (creaturesHandler.get(cInfo.getWorld()).getMaxNeutral() < getNumberOfCreatures(
+							spawnLoc, CreatureNature.NEUTRAL)) {
+						return false;
+					}
+					break;
+				}
+				if (cInfo.getSpawnTime() != SpawnTime.NIGHT
+						|| cInfo.getSpawnTime() != SpawnTime.BOTH) {
+					return false;
+				}
+			}
+			if (spawnLoc.getBlockY() > cInfo.getMaxSpawnHeight()) {
+				return false;
+			}
+			if (spawnLoc.getBlockY() < cInfo.getMinSpawnHeight()) {
+				return false;
+			}
+			if (spawnLoc.getBlock().getLightLevel() > cInfo.getMaxLight()) {
+				return false;
+			}
+			if (spawnLoc.getBlock().getLightLevel() < cInfo.getMinLight()) {
+				return false;
+			}
+			if (!cInfo.getSpawnBlocks().contains(spawnLoc.getBlock().getType())) {
+				return false;
+			}
+			if (spawnChance(precent)) {
+				return true;
 			} else {
 				return false;
 			}
@@ -192,6 +287,8 @@ public class MobControlPlugin extends JavaPlugin {
 					if (entity instanceof Zombie) {
 						if (entity instanceof PigZombie) {
 							return CreatureType.PIG_ZOMBIE;
+						} else {
+							return CreatureType.ZOMBIE;
 						}
 					} else if (entity instanceof Creeper) {
 						return CreatureType.CREEPER;
@@ -221,7 +318,7 @@ public class MobControlPlugin extends JavaPlugin {
 	}
 
 	public void onEnable() {
-		PluginDescriptionFile pdfFile = this.getDescription();
+		pdfFile = this.getDescription();
 		log = Logger.getLogger("Minecraft");
 
 		// Load config file
@@ -245,7 +342,9 @@ public class MobControlPlugin extends JavaPlugin {
 
 		// Scheduler
 		// Remove this until fully working
-		//this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new SpawnerCreature(this, creatures), 0L, (long)creatures.getSpawnDelay());
+		// this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new
+		// SpawnerCreature(this, creatures), 0L,
+		// (long)creatures.getSpawnDelay());
 		getServer().getScheduler().scheduleSyncRepeatingTask(this,
 				new Runnable() {
 
@@ -254,32 +353,19 @@ public class MobControlPlugin extends JavaPlugin {
 							for (World w : getServer().getWorlds()) {
 								for (Entity e : w.getEntities()) {
 									if (e instanceof Creature) {
+										Creature c = (Creature) e;
+										CreatureInfo cInfo = creaturesHandler.get(w).get(getCreatureType(e));
 										if (getCreatureType(e) != null) {
-											String enabledNode = "MobControl.Mobs."
-													+ getCreatureType(e)
-															.getName()
-															.toUpperCase()
-													+ ".Enabled";
-											if (!getConfiguration().getBoolean(
-													enabledNode, true)) {
-												Creature c = (Creature) e;
+											if (!cInfo.isEnabled()) {
 												c.setHealth(0);
 											} else {
-
-												String burnNode = "MobControl.Mobs."
-														+ getCreatureType(e)
-																.getName()
-																.toUpperCase()
-														+ ".Day.Burn";
-												if (getConfiguration()
-														.getBoolean(burnNode,
-																false)) {
-													if (shouldBurn(e
+												if (cInfo.isBurn()) {
+													if (shouldBurn(c
 															.getLocation())) {
-														e.setFireTicks(20);
+														c.setFireTicks(20);
 													}
 												} else {
-													e.setFireTicks(0);
+													c.setFireTicks(0);
 												}
 											}
 										}
@@ -288,7 +374,7 @@ public class MobControlPlugin extends JavaPlugin {
 							}
 						}
 					}
-				}, 0L, 10L);
+				}, 0L, 1L);
 		log.info("[" + pdfFile.getName() + "] Version " + pdfFile.getVersion()
 				+ " is enabled!");
 	}
@@ -305,116 +391,16 @@ public class MobControlPlugin extends JavaPlugin {
 				e.printStackTrace();
 			}
 
-			// Default Settings
-			config.setProperty("MobControl.Mobs.Max", 0);
+			for (World w : this.getServer().getWorlds()) {
+				defaults.SetConfig(w, config);
+			}
 
-			config.setProperty("MobControl.Mobs.PIG.Enabled", true);
-			config.setProperty("MobControl.Mobs.PIG.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.PIG.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.PIG.Day.Nature", "Passive");
-			config.setProperty("MobControl.Mobs.PIG.Day.Burn", false);
-			config.setProperty("MobControl.Mobs.PIG.Night.Nature", "Passive");
-
-			config.setProperty("MobControl.Mobs.COW.Enabled", true);
-			config.setProperty("MobControl.Mobs.COW.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.COW.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.COW.Day.Nature", "Passive");
-			config.setProperty("MobControl.Mobs.COW.Day.Burn", false);
-			config.setProperty("MobControl.Mobs.COW.Night.Nature", "Passive");
-
-			config.setProperty("MobControl.Mobs.SHEEP.Enabled", true);
-			config.setProperty("MobControl.Mobs.SHEEP.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.SHEEP.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.SHEEP.Day.Nature", "Passive");
-			config.setProperty("MobControl.Mobs.SHEEP.Day.Burn", false);
-			config.setProperty("MobControl.Mobs.SHEEP.Night.Nature", "Passive");
-
-			config.setProperty("MobControl.Mobs.CHICKEN.Enabled", true);
-			config.setProperty("MobControl.Mobs.CHICKEN.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.CHICKEN.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.CHICKEN.Day.Nature", "Passive");
-			config.setProperty("MobControl.Mobs.CHICKEN.Day.Burn", false);
-			config.setProperty("MobControl.Mobs.CHICKEN.Night.Nature",
-					"Passive");
-
-			config.setProperty("MobControl.Mobs.SQUID.Enabled", true);
-			config.setProperty("MobControl.Mobs.SQUID.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.SQUID.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.SQUID.Day.Nature", "Passive");
-			config.setProperty("MobControl.Mobs.SQUID.Day.Burn", false);
-			config.setProperty("MobControl.Mobs.SQUID.Night.Nature", "Passive");
-
-			config.setProperty("MobControl.Mobs.PIG_ZOMBIE.Enabled", true);
-			config.setProperty("MobControl.Mobs.PIG_ZOMBIE.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.PIG_ZOMBIE.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.PIG_ZOMBIE.Day.Nature",
-					"Neutral");
-			config.setProperty("MobControl.Mobs.PIG_ZOMBIE.Day.Burn", false);
-			config.setProperty("MobControl.Mobs.PIG_ZOMBIE.Night.Nature",
-					"Neutral");
-
-			config.setProperty("MobControl.Mobs.SPIDER.Enabled", true);
-			config.setProperty("MobControl.Mobs.SPIDER.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.SPIDER.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.SPIDER.Day.Nature", "Neutral");
-			config.setProperty("MobControl.Mobs.SPIDER.Day.Burn", false);
-			config.setProperty("MobControl.Mobs.SPIDER.Night.Nature",
-					"Aggressive");
-
-			config.setProperty("MobControl.Mobs.ZOMBIE.Enabled", true);
-			config.setProperty("MobControl.Mobs.ZOMBIE.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.ZOMBIE.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.ZOMBIE.Day.Nature",
-					"Aggressive");
-			config.setProperty("MobControl.Mobs.ZOMBIE.Day.Burn", true);
-			config.setProperty("MobControl.Mobs.ZOMBIE.Night.Nature",
-					"Aggressive");
-
-			config.setProperty("MobControl.Mobs.SKELETON.Enabled", true);
-			config.setProperty("MobControl.Mobs.SKELETON.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.SKELETON.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.SKELETON.Day.Nature",
-					"Aggressive");
-			config.setProperty("MobControl.Mobs.SKELETON.Day.Burn", true);
-			config.setProperty("MobControl.Mobs.SKELETON.Night.Nature",
-					"Aggressive");
-
-			config.setProperty("MobControl.Mobs.CREEPER.Enabled", true);
-			config.setProperty("MobControl.Mobs.CREEPER.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.CREEPER.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.CREEPER.Day.Nature",
-					"Aggressive");
-			config.setProperty("MobControl.Mobs.CREEPER.Day.Burn", false);
-			config.setProperty("MobControl.Mobs.CREEPER.Night.Nature",
-					"Aggressive");
-
-			config.setProperty("MobControl.Mobs.SLIME.Enabled", true);
-			config.setProperty("MobControl.Mobs.SLIME.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.SLIME.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.SLIME.Day.Nature", "Aggressive");
-			config.setProperty("MobControl.Mobs.SLIME.Day.Burn", false);
-			config.setProperty("MobControl.Mobs.SLIME.Night.Nature",
-					"Aggressive");
-
-			config.setProperty("MobControl.Mobs.GHAST.Enabled", true);
-			config.setProperty("MobControl.Mobs.GHAST.SpawnHeight", 0);
-			config.setProperty("MobControl.Mobs.GHAST.SpawnChance", 100);
-			config.setProperty("MobControl.Mobs.GHAST.Day.Nature", "Aggressive");
-			config.setProperty("MobControl.Mobs.GHAST.Day.Burn", false);
-			config.setProperty("MobControl.Mobs.GHAST.Night.Nature",
-					"Aggressive");
-			config.save();
+			creaturesHandler.saveSettings(config);
+			creaturesHandler.loadSettings(config);
+			
+			log.info("[" + pdfFile.getName() + "] Created default settings");
+		} else {
+			creaturesHandler.loadSettings(config);
 		}
 	}
-
-	public CreatureType findType(String mob) {
-		for (CreatureType mobtype : CreatureType.values()) {
-			if (mobtype.name().equalsIgnoreCase(mob))
-				return mobtype;
-			else if (mobtype.name().replaceAll("_", "").equalsIgnoreCase(mob))
-				return mobtype;
-		}
-		return null;
-	}
-
 }
