@@ -395,7 +395,7 @@ public class MobControlPlugin extends JavaPlugin {
 				defaults.SetConfig(w, config);
 			}
 
-			creaturesHandler.saveSettings(config);
+			creaturesHandler.saveSettings();
 			creaturesHandler.loadSettings(config);
 			
 			log.info("[" + pdfFile.getName() + "] Created default settings");

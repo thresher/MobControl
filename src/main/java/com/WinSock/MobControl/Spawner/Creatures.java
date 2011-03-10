@@ -171,7 +171,7 @@ public class Creatures extends AbstractMap<CreatureType, CreatureInfo> {
 		return spawnDelay;
 	}
 
-	public void saveSettings(Configuration config) {
+	public void saveSettings() {
 		config.setProperty("MobControl." + world.getName() + ".MaxPassive",
 				maxPassive);
 		config.setProperty("MobControl." + world.getName() + ".MaxHostile",
@@ -205,6 +205,12 @@ public class Creatures extends AbstractMap<CreatureType, CreatureInfo> {
 
 		List<String> nodes = config.getKeys("MobControl." + world.getName()
 				+ ".Mobs");
+		
+		if (nodes == null || nodes.size() <= 0)
+		{
+			defaults.SetConfig(world, config);
+			saveSettings();
+		}
 
 		for (String key : nodes) {
 			Set<Material> spawnBlocks = new HashSet<Material>();

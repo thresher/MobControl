@@ -106,9 +106,9 @@ public class CreaturesHandler extends AbstractMap<World, Creatures> {
 		return oldValue;
 	}
 
-	public void saveSettings(Configuration config) {
+	public void saveSettings() {
 		for (Creatures c : this.values()) {
-			c.saveSettings(config);
+			c.saveSettings();
 		}
 	}
 
