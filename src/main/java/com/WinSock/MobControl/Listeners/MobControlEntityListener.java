@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.CreatureType;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
@@ -175,19 +174,6 @@ public class MobControlEntityListener extends EntityListener {
 					event.getEntity().getWorld()).get(cType);
 			if (!plugin.canSpawn(event.getLocation(), cInfo, 100)) {
 				event.setCancelled(true);
-			} else if (cInfo.isBurn()) {
-				if (plugin.isDay(event.getEntity().getWorld()) && plugin.canSeeSky(event.getLocation())) {
-					if (event
-							.getLocation()
-							.getWorld()
-							.getBlockAt(event.getLocation().getBlockX(),
-									event.getLocation().getBlockY() + 1,
-									event.getLocation().getBlockZ())
-							.getLightLevel() > 7) {
-						Entity e = event.getEntity();
-						e.setFireTicks(20);
-					}
-				}
 			}
 		}
 	}

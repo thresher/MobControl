@@ -72,37 +72,37 @@ public class Defaults {
 		// Aggressive
 		CreatureInfo spider = new CreatureInfo(CreatureType.SPIDER, spawnBAgro,
 				0, 7, 0.5F, 0, 0, 1, false, CreatureNature.AGGRESSIVE,
-				CreatureNature.NEUTRAL, 10, 1, SpawnTime.NIGHT, true,
+				CreatureNature.NEUTRAL, 10, 1, SpawnTime.BOTH, true,
 				Environment.NORMAL);
 		defaults.put(spider.getCreature(), spider);
 
 		CreatureInfo zombie = new CreatureInfo(CreatureType.ZOMBIE, spawnBAgro,
 				0, 7, 0.5F, 0, 0, 2, true, CreatureNature.AGGRESSIVE,
-				CreatureNature.AGGRESSIVE, 10, 3, SpawnTime.NIGHT, true,
+				CreatureNature.AGGRESSIVE, 10, 3, SpawnTime.BOTH, true,
 				Environment.NORMAL);
 		defaults.put(zombie.getCreature(), zombie);
 
 		CreatureInfo skeleton = new CreatureInfo(CreatureType.SKELETON,
 				spawnBAgro, 0, 7, 0.5F, 0, 0, 2, true,
 				CreatureNature.AGGRESSIVE, CreatureNature.AGGRESSIVE, 10, 1,
-				SpawnTime.NIGHT, true, Environment.NORMAL);
+				SpawnTime.BOTH, true, Environment.NORMAL);
 		defaults.put(skeleton.getCreature(), skeleton);
 
 		CreatureInfo creeper = new CreatureInfo(CreatureType.CREEPER,
 				spawnBAgro, 0, 7, 0.5F, 0, 0, 2, true,
 				CreatureNature.AGGRESSIVE, CreatureNature.AGGRESSIVE, 10, 8,
-				SpawnTime.NIGHT, true, Environment.NORMAL);
+				SpawnTime.BOTH, true, Environment.NORMAL);
 		defaults.put(creeper.getCreature(), creeper);
 
 		CreatureInfo slime = new CreatureInfo(CreatureType.SLIME, spawnBAgro,
 				0, 7, 0.5F, 0, 0, 2, true, CreatureNature.AGGRESSIVE,
-				CreatureNature.AGGRESSIVE, 0, 0, SpawnTime.NIGHT, true,
+				CreatureNature.AGGRESSIVE, 0, 0, SpawnTime.BOTH, true,
 				Environment.NORMAL);
 		defaults.put(slime.getCreature(), slime);
 
 		CreatureInfo ghast = new CreatureInfo(CreatureType.GHAST, spawnBAgro,
 				0, 7, 0.5F, 0, 0, 2, true, CreatureNature.AGGRESSIVE,
-				CreatureNature.AGGRESSIVE, 5, 3, SpawnTime.NIGHT, true,
+				CreatureNature.AGGRESSIVE, 5, 3, SpawnTime.BOTH, true,
 				Environment.NETHER);
 		defaults.put(ghast.getCreature(), ghast);
 	}

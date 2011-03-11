@@ -213,11 +213,11 @@ public class MobControlPlugin extends JavaPlugin {
 					break;
 				}
 				if (cInfo.getSpawnTime() != SpawnTime.DAY
-						|| cInfo.getSpawnTime() != SpawnTime.BOTH) {
+						&& cInfo.getSpawnTime() != SpawnTime.BOTH) {
 					return false;
 				}
 			} else {
-				switch (cInfo.getNatureDay()) {
+				switch (cInfo.getNatureNight()) {
 				case PASSIVE:
 					if (creaturesHandler.get(cInfo.getWorld()).getMaxPassive() < getNumberOfCreatures(
 							spawnLoc, CreatureNature.PASSIVE)) {
@@ -238,14 +238,22 @@ public class MobControlPlugin extends JavaPlugin {
 					break;
 				}
 				if (cInfo.getSpawnTime() != SpawnTime.NIGHT
-						|| cInfo.getSpawnTime() != SpawnTime.BOTH) {
+						&& cInfo.getSpawnTime() != SpawnTime.BOTH) {
 					return false;
 				}
 			}
-			if (spawnLoc.getBlockY() > cInfo.getMaxSpawnHeight()) {
+			if (cInfo.getMaxSpawnHeight() == 0)
+			{
+				return true;
+			}
+			else if (spawnLoc.getBlockY() > cInfo.getMaxSpawnHeight()) {
 				return false;
 			}
-			if (spawnLoc.getBlockY() < cInfo.getMinSpawnHeight()) {
+			if (cInfo.getMinSpawnHeight() == 0)
+			{
+				return true;
+			}
+			else if (spawnLoc.getBlockY() < cInfo.getMinSpawnHeight()) {
 				return false;
 			}
 			if (spawnLoc.getBlock().getLightLevel() > cInfo.getMaxLight()) {
@@ -329,15 +337,15 @@ public class MobControlPlugin extends JavaPlugin {
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.CREATURE_SPAWN, entityListener, Priority.Highest,
 				this);
-		pm.registerEvent(Type.ENTITY_COMBUST, entityListener, Priority.Highest,
+		pm.registerEvent(Type.ENTITY_COMBUST, entityListener, Priority.Normal,
 				this);
-		pm.registerEvent(Type.ENTITY_TARGET, entityListener, Priority.Highest,
+		pm.registerEvent(Type.ENTITY_TARGET, entityListener, Priority.High,
 				this);
-		pm.registerEvent(Type.ENTITY_DEATH, entityListener, Priority.Highest,
+		pm.registerEvent(Type.ENTITY_DEATH, entityListener, Priority.Monitor,
 				this);
-		pm.registerEvent(Type.ENTITY_DAMAGED, entityListener, Priority.Highest,
+		pm.registerEvent(Type.ENTITY_DAMAGED, entityListener, Priority.High,
 				this);
-		pm.registerEvent(Type.ENTITY_EXPLODE, entityListener, Priority.Highest,
+		pm.registerEvent(Type.ENTITY_EXPLODE, entityListener, Priority.High,
 				this);
 
 		// Scheduler
