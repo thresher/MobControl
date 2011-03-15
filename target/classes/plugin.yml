@@ -1,6 +1,6 @@
 name: MobControl
 main: com.WinSock.MobControl.MobControlPlugin
-version: 1.7.02
+version: 1.8
 commands:
   mobc:
     description: Mob Control main command

@@ -19,8 +19,12 @@ import com.WinSock.MobControl.Spawner.SpawnTime;
 public class Defaults {
 
 	private Map<CreatureType, CreatureInfo> defaults = new HashMap<CreatureType, CreatureInfo>();
+	private Configuration config;
 
-	public Defaults() {
+	public Defaults(Configuration config) {
+
+		this.config = config;
+
 		// Default Creatures
 		Set<Material> spawnBAgro = new HashSet<Material>(Arrays.asList(Material
 				.values()));
@@ -107,7 +111,7 @@ public class Defaults {
 		defaults.put(ghast.getCreature(), ghast);
 	}
 
-	public void SetConfig(World world, Configuration config) {
+	public void SetConfig(World world) {
 		for (CreatureInfo i : defaults.values()) {
 			CreatureInfo temp = i;
 			temp.setWorld(world);
@@ -123,5 +127,9 @@ public class Defaults {
 			}
 		}
 		return null;
+	}
+
+	public Configuration getConfig() {
+		return this.config;
 	}
 }

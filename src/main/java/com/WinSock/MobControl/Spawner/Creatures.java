@@ -15,7 +15,9 @@ import org.bukkit.World.Environment;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.util.config.Configuration;
 
-import com.WinSock.MobControl.Defaults;
+import com.WinSock.MobControl.Exception.EnvironmentNotFoundException;
+import com.WinSock.MobControl.Exception.MobTypeNotFoundException;
+import com.WinSock.MobControl.Exception.WorldNotFoundException;
 import com.WinSock.MobControl.Spawner.CreatureNature;
 import com.WinSock.MobControl.Spawner.SpawnTime;
 
@@ -32,7 +34,6 @@ public class Creatures extends AbstractMap<CreatureType, CreatureInfo> {
 	private int spawnDelay = 1;
 
 	private World world;
-	private Defaults defaults = new Defaults();
 	private Configuration config;
 
 	public Creatures(World world, Configuration config) {
@@ -107,7 +108,7 @@ public class Creatures extends AbstractMap<CreatureType, CreatureInfo> {
 	public int getDistanceFromPlayer() {
 		return distanceFromPlayer;
 	}
-	
+
 	public int getMaxPassive() {
 		return maxPassive;
 	}
@@ -116,21 +117,15 @@ public class Creatures extends AbstractMap<CreatureType, CreatureInfo> {
 		this.maxPassive = maxPassive;
 	}
 
-	public CreatureInfo getCreatureFromType(CreatureType type) {
+	public CreatureInfo getCreatureFromType(CreatureType type)
+			throws MobTypeNotFoundException {
 		for (CreatureInfo i : this.values()) {
 			if (i.getCreature() == type) {
 				return i;
 			}
 		}
 
-		CreatureInfo info = defaults.getDefaultFromType(type);
-		if (info != null) {
-			this.put(type, info);
-			info.saveConfig(config);
-			return info;
-		}
-
-		return null;
+		throw new MobTypeNotFoundException();
 	}
 
 	public Set<CreatureInfo> getEnabled() {
@@ -189,7 +184,7 @@ public class Creatures extends AbstractMap<CreatureType, CreatureInfo> {
 		}
 	}
 
-	public void loadSettings() {
+	public void loadSettings() throws WorldNotFoundException {
 		config.load();
 
 		maxPassive = config.getInt("MobControl." + world.getName()
@@ -205,71 +200,85 @@ public class Creatures extends AbstractMap<CreatureType, CreatureInfo> {
 
 		List<String> nodes = config.getKeys("MobControl." + world.getName()
 				+ ".Mobs");
-		
-		if (nodes == null || nodes.size() <= 0)
-		{
-			defaults.SetConfig(world, config);
-			saveSettings();
-		}
 
-		for (String key : nodes) {
-			Set<Material> spawnBlocks = new HashSet<Material>();
-			List<Integer> blockIds = config.getIntList(
-					"MobControl." + world.getName() + ".Mobs." + key
-							+ ".SpawnMaterial", null);
-			for (int i : blockIds) {
-				spawnBlocks.add(Material.getMaterial(i));
+		if (nodes != null) {
+			for (String key : nodes) {
+				Set<Material> spawnBlocks = new HashSet<Material>();
+				List<Integer> blockIds = config.getIntList("MobControl."
+						+ world.getName() + ".Mobs." + key + ".SpawnMaterial",
+						null);
+				for (int i : blockIds) {
+					spawnBlocks.add(Material.getMaterial(i));
+				}
+
+				int minLight = config.getInt("MobControl." + world.getName()
+						+ ".Mobs." + key + ".SpawnLightMin", 0);
+				int maxLight = config.getInt("MobControl." + world.getName()
+						+ ".Mobs." + key + ".SpawnLightMax", 0);
+
+				CreatureNature natureDay = CreatureNature.fromString(config
+						.getString("MobControl." + world.getName() + ".Mobs."
+								+ key + ".Day.Nature", "Passive"));
+				CreatureNature natureNight = CreatureNature.fromString(config
+						.getString("MobControl." + world.getName() + ".Mobs."
+								+ key + ".Night.Nature", "Passive"));
+
+				int minSpawnHeight = config.getInt(
+						"MobControl." + world.getName() + ".Mobs." + key
+								+ ".SpawnHeightMin", 0);
+				int maxSpawnHeight = config.getInt(
+						"MobControl." + world.getName() + ".Mobs." + key
+								+ ".SpawnHeightMax", 0);
+
+				int spawnRoom = config.getInt("MobControl." + world.getName()
+						+ ".Mobs." + key + ".SpawnRoom", 0);
+
+				double spawnRate = config.getDouble(
+						"MobControl." + world.getName() + ".Mobs." + key
+								+ ".SpawnRate", 0.50D);
+
+				boolean dayBurn = config.getBoolean(
+						"MobControl." + world.getName() + ".Mobs." + key
+								+ ".Day.Burn", false);
+
+				boolean enabled = config.getBoolean(
+						"MobControl." + world.getName() + ".Mobs." + key
+								+ ".Enabled", true);
+
+				int health = config.getInt("MobControl." + world.getName()
+						+ ".Mobs." + key + ".Health", 0);
+
+				int attackDamage = config.getInt(
+						"MobControl." + world.getName() + ".Mobs." + key
+								+ ".AttackDamage", 0);
+
+				SpawnTime spawnTime = SpawnTime.fromString(config.getString(
+						"MobControl." + world.getName() + ".Mobs." + key
+								+ ".SpawnTime", "Both"));
+
+				Environment environment;
+				try {
+					environment = findEnvironment(config.getString(
+							"MobControl." + world.getName() + ".Mobs." + key
+									+ ".Environment", "NORMAL"));
+					CreatureInfo creature = new CreatureInfo(findType(key),
+							spawnBlocks, minLight, maxLight, spawnRate,
+							minSpawnHeight, maxSpawnHeight, spawnRoom, dayBurn,
+							natureDay, natureNight, health, attackDamage,
+							spawnTime, enabled, environment, world);
+					this.put(findType(key), creature);
+				} catch (EnvironmentNotFoundException e) {
+					System.out
+							.println("Invalid environment node in: MobControl."
+									+ world.getName() + ".Mobs." + key);
+				} catch (MobTypeNotFoundException e) {
+					System.out.println("Invalid node name: " + key
+							+ ", in: MobControl." + world.getName() + ".Mobs");
+					e.printStackTrace();
+				}
 			}
-
-			int minLight = config.getInt("MobControl." + world.getName()
-					+ ".Mobs." + key + ".SpawnLightMin", 0);
-			int maxLight = config.getInt("MobControl." + world.getName()
-					+ ".Mobs." + key + ".SpawnLightMax", 0);
-
-			CreatureNature natureDay = CreatureNature.fromString(config
-					.getString("MobControl." + world.getName() + ".Mobs." + key
-							+ ".Day.Nature", "Passive"));
-			CreatureNature natureNight = CreatureNature.fromString(config
-					.getString("MobControl." + world.getName() + ".Mobs." + key
-							+ ".Night.Nature", "Passive"));
-
-			int minSpawnHeight = config.getInt("MobControl." + world.getName()
-					+ ".Mobs." + key + ".SpawnHeightMin", 0);
-			int maxSpawnHeight = config.getInt("MobControl." + world.getName()
-					+ ".Mobs." + key + ".SpawnHeightMax", 0);
-
-			int spawnRoom = config.getInt("MobControl." + world.getName()
-					+ ".Mobs." + key + ".SpawnRoom", 0);
-
-			double spawnRate = config.getDouble("MobControl."
-					+ world.getName() + ".Mobs." + key + ".SpawnRate", 0.50D);
-
-			boolean dayBurn = config.getBoolean("MobControl." + world.getName()
-					+ ".Mobs." + key + ".Day.Burn", false);
-
-			boolean enabled = config.getBoolean("MobControl." + world.getName()
-					+ ".Mobs." + key + ".Enabled", true);
-
-			int health = config.getInt("MobControl." + world.getName()
-					+ ".Mobs." + key + ".Health", 0);
-
-			int attackDamage = config.getInt("MobControl." + world.getName()
-					+ ".Mobs." + key + ".AttackDamage", 0);
-
-			SpawnTime spawnTime = SpawnTime.fromString(config.getString(
-					"MobControl." + world.getName() + ".Mobs." + key
-							+ ".SpawnTime", "Both"));
-
-			Environment environment = findEnvironment(config.getString(
-					"MobControl." + world.getName() + ".Mobs." + key
-							+ ".Environment", "NORMAL"));
-
-			CreatureInfo creature = new CreatureInfo(findType(key),
-					spawnBlocks, minLight, maxLight, spawnRate, minSpawnHeight,
-					maxSpawnHeight, spawnRoom, dayBurn, natureDay, natureNight,
-					health, attackDamage, spawnTime, enabled, environment,
-					world);
-			this.put(findType(key), creature);
+		} else {
+			throw new WorldNotFoundException();
 		}
 	}
 
@@ -323,23 +332,24 @@ public class Creatures extends AbstractMap<CreatureType, CreatureInfo> {
 		return oldValue;
 	}
 
-	public CreatureType findType(String mob) {
+	public CreatureType findType(String mob) throws MobTypeNotFoundException {
 		for (CreatureType mobtype : CreatureType.values()) {
 			if (mobtype.name().equalsIgnoreCase(mob))
 				return mobtype;
 			else if (mobtype.name().replaceAll("_", "").equalsIgnoreCase(mob))
 				return mobtype;
 		}
-		return null;
+		throw new MobTypeNotFoundException();
 	}
 
-	public Environment findEnvironment(String ev) {
+	public Environment findEnvironment(String ev)
+			throws EnvironmentNotFoundException {
 		for (Environment e : Environment.values()) {
 			if (e.name().equalsIgnoreCase(ev))
 				return e;
 			else if (e.name().replaceAll("_", "").equalsIgnoreCase(ev))
 				return e;
 		}
-		return null;
+		throw new EnvironmentNotFoundException();
 	}
 }

@@ -2,6 +2,9 @@ package com.WinSock.MobControl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -23,6 +26,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Pig;
 import org.bukkit.entity.PigZombie;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Slime;
@@ -38,9 +42,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
 
 import com.WinSock.MobControl.Listeners.MobControlEntityListener;
+import com.WinSock.MobControl.Listeners.MobControlWorldListener;
 //import com.WinSock.MobControl.Spawner.SpawnerCreature;
 import com.WinSock.MobControl.Spawner.CreatureInfo;
 import com.WinSock.MobControl.Spawner.CreatureNature;
+import com.WinSock.MobControl.Spawner.Creatures;
 import com.WinSock.MobControl.Spawner.CreaturesHandler;
 import com.WinSock.MobControl.Spawner.SpawnTime;
 
@@ -48,10 +54,15 @@ public class MobControlPlugin extends JavaPlugin {
 
 	private MobControlEntityListener entityListener = new MobControlEntityListener(
 			this);
+	public MobControlWorldListener worldListener;
+
 	public Logger log = null;
 	private PluginDescriptionFile pdfFile;
-	private Defaults defaults = new Defaults();
+
+	private Defaults defaults;
 	public CreaturesHandler creaturesHandler = new CreaturesHandler(this);
+
+	public Map<Creature, List<LivingEntity>> attacked = new HashMap<Creature, List<LivingEntity>>();
 
 	public void onDisable() {
 		log.info("[" + pdfFile.getName() + "] Version " + pdfFile.getVersion()
@@ -242,18 +253,14 @@ public class MobControlPlugin extends JavaPlugin {
 					return false;
 				}
 			}
-			if (cInfo.getMaxSpawnHeight() == 0)
-			{
+			if (cInfo.getMaxSpawnHeight() == 0) {
 				return true;
-			}
-			else if (spawnLoc.getBlockY() > cInfo.getMaxSpawnHeight()) {
+			} else if (spawnLoc.getBlockY() > cInfo.getMaxSpawnHeight()) {
 				return false;
 			}
-			if (cInfo.getMinSpawnHeight() == 0)
-			{
+			if (cInfo.getMinSpawnHeight() == 0) {
 				return true;
-			}
-			else if (spawnLoc.getBlockY() < cInfo.getMinSpawnHeight()) {
+			} else if (spawnLoc.getBlockY() < cInfo.getMinSpawnHeight()) {
 				return false;
 			}
 			if (spawnLoc.getBlock().getLightLevel() > cInfo.getMaxLight()) {
@@ -300,12 +307,13 @@ public class MobControlPlugin extends JavaPlugin {
 						}
 					} else if (entity instanceof Creeper) {
 						return CreatureType.CREEPER;
-					} else if (entity instanceof Giant) { /* No Giant in Creature */
+					} else if (entity instanceof Giant) {
 					} else if (entity instanceof Skeleton) {
 						return CreatureType.SKELETON;
 					} else if (entity instanceof Spider) {
 						return CreatureType.SPIDER;
-					} else if (entity instanceof Slime) { /* Slime in Creature */
+					} else if (entity instanceof Slime) {
+						return CreatureType.SLIME;
 					}
 				}
 				// Water Animals
@@ -330,8 +338,8 @@ public class MobControlPlugin extends JavaPlugin {
 		log = Logger.getLogger("Minecraft");
 
 		// Load config file
-		Configuration config = this.getConfiguration();
-		loadSettings(config);
+		loadSettings(this.getConfiguration());
+		worldListener = new MobControlWorldListener(this, defaults);
 
 		// Register our events
 		PluginManager pm = getServer().getPluginManager();
@@ -346,6 +354,8 @@ public class MobControlPlugin extends JavaPlugin {
 		pm.registerEvent(Type.ENTITY_DAMAGED, entityListener, Priority.High,
 				this);
 		pm.registerEvent(Type.ENTITY_EXPLODE, entityListener, Priority.High,
+				this);
+		pm.registerEvent(Type.WORLD_LOADED, worldListener, Priority.Monitor,
 				this);
 
 		// Scheduler
@@ -362,7 +372,8 @@ public class MobControlPlugin extends JavaPlugin {
 								for (Entity e : w.getEntities()) {
 									if (e instanceof Creature) {
 										Creature c = (Creature) e;
-										CreatureInfo cInfo = creaturesHandler.get(w).get(getCreatureType(e));
+										CreatureInfo cInfo = creaturesHandler
+												.get(w).get(getCreatureType(e));
 										if (getCreatureType(e) != null) {
 											if (!cInfo.isEnabled()) {
 												c.setHealth(0);
@@ -383,11 +394,65 @@ public class MobControlPlugin extends JavaPlugin {
 						}
 					}
 				}, 0L, 1L);
+		getServer().getScheduler().scheduleSyncRepeatingTask(this,
+				new Runnable() {
+
+					public void run() {
+						for (Player p : getServer().getOnlinePlayers()) {
+							for (Entity e : p.getWorld().getEntities()) {
+								double deltax = Math.abs(e.getLocation().getX()
+										- p.getLocation().getX());
+								double deltay = Math.abs(e.getLocation().getY()
+										- p.getLocation().getY());
+								double deltaz = Math.abs(e.getLocation().getZ()
+										- p.getLocation().getZ());
+								double distance = Math
+										.sqrt((deltax * deltax)
+												+ (deltay * deltay)
+												+ (deltaz * deltaz));
+								CreatureType cType = getCreatureType(e);
+								if (cType != null) {
+									if (cType != null) {
+										CreatureInfo cInfo = creaturesHandler
+												.get(p.getWorld()).get(cType);
+										if (distance < 1.3) {
+											if (cInfo.getCreature() != CreatureType.SKELETON
+													|| cInfo.getCreature() != CreatureType.CREEPER
+													|| cInfo.getCreature() != CreatureType.GHAST) {
+												p.damage(cInfo
+														.getAttackDamage());
+											}
+										} else if (distance < 24) {
+											if (isDay(e.getWorld()))
+											{
+												if (cInfo.getNatureDay() == CreatureNature.AGGRESSIVE)
+												{
+													((Creature) e)
+															.setTarget((LivingEntity) p);
+												}
+											}
+											else
+											{
+												if (cInfo.getNatureNight() == CreatureNature.AGGRESSIVE)
+												{
+													((Creature) e)
+															.setTarget((LivingEntity) p);
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}, 0L, 10L);
+
 		log.info("[" + pdfFile.getName() + "] Version " + pdfFile.getVersion()
 				+ " is enabled!");
 	}
 
 	public void loadSettings(Configuration config) {
+		defaults = new Defaults(config);
 		File yml = new File(getDataFolder() + "/config.yml");
 		if (!this.getDataFolder().exists()) {
 			this.getDataFolder().mkdirs();
@@ -398,17 +463,22 @@ public class MobControlPlugin extends JavaPlugin {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
-			for (World w : this.getServer().getWorlds()) {
-				defaults.SetConfig(w, config);
-			}
-
-			creaturesHandler.saveSettings();
-			creaturesHandler.loadSettings(config);
-			
-			log.info("[" + pdfFile.getName() + "] Created default settings");
 		} else {
 			creaturesHandler.loadSettings(config);
 		}
+
+		for (World w : this.getServer().getWorlds()) {
+			if (!creaturesHandler.containsKey(w)) {
+				defaults.SetConfig(w);
+				Creatures creautres = new Creatures(w, config);
+				creaturesHandler.put(w, creautres);
+
+				log.info("[" + pdfFile.getName()
+						+ "] Created default settings for world: "
+						+ w.getName());
+			}
+		}
+
+		log.info("[" + pdfFile.getName() + "] Loaded settings!");
 	}
 }

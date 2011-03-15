@@ -11,6 +11,7 @@ import org.bukkit.World;
 import org.bukkit.util.config.Configuration;
 
 import com.WinSock.MobControl.MobControlPlugin;
+import com.WinSock.MobControl.Exception.WorldNotFoundException;
 
 public class CreaturesHandler extends AbstractMap<World, Creatures> {
 
@@ -71,8 +72,11 @@ public class CreaturesHandler extends AbstractMap<World, Creatures> {
 		config.load();
 		for (World w : plugin.getServer().getWorlds()) {
 			Creatures c = new Creatures(w, config);
-			c.loadSettings();
-			this.put(w, c);
+			try {
+				c.loadSettings();
+				this.put(w, c);
+			} catch (WorldNotFoundException e) {
+			}
 		}
 	}
 
