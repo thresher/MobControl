@@ -20,11 +20,13 @@ public class MobControlWorldListener extends WorldListener {
 
 	@Override
 	public void onWorldLoaded(WorldEvent event) {
-		if (!plugin.creaturesHandler.containsKey(event.getWorld())) {
-			defaults.SetConfig(event.getWorld());
-			Creatures creautres = new Creatures(event.getWorld(),
-					defaults.getConfig());
-			plugin.creaturesHandler.put(event.getWorld(), creautres);
+		if (plugin.running) {
+			if (!plugin.creaturesHandler.containsKey(event.getWorld())) {
+				defaults.SetConfig(event.getWorld());
+				Creatures creautres = new Creatures(event.getWorld(),
+						defaults.getConfig());
+				plugin.creaturesHandler.put(event.getWorld(), creautres);
+			}
 		}
 	}
 }

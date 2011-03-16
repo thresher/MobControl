@@ -63,8 +63,10 @@ public class MobControlPlugin extends JavaPlugin {
 	public CreaturesHandler creaturesHandler = new CreaturesHandler(this);
 
 	public Map<Creature, List<LivingEntity>> attacked = new HashMap<Creature, List<LivingEntity>>();
+	public boolean running = false;
 
 	public void onDisable() {
+		this.running = false;
 		log.info("[" + pdfFile.getName() + "] Version " + pdfFile.getVersion()
 				+ " is disabled!");
 	}
@@ -367,86 +369,87 @@ public class MobControlPlugin extends JavaPlugin {
 				new Runnable() {
 
 					public void run() {
-						if (getServer().getOnlinePlayers().length > 0) {
-							for (World w : getServer().getWorlds()) {
-								for (Entity e : w.getEntities()) {
-									if (e instanceof Creature) {
-										Creature c = (Creature) e;
-										CreatureInfo cInfo = creaturesHandler
-												.get(w).get(getCreatureType(e));
-										if (getCreatureType(e) != null) {
-											if (!cInfo.isEnabled()) {
-												c.setHealth(0);
-											} else {
-												if (cInfo.isBurn()) {
-													if (shouldBurn(c
-															.getLocation())) {
-														c.setFireTicks(20);
-													}
+						if (running)
+							if (getServer().getOnlinePlayers().length > 0) {
+								for (World w : getServer().getWorlds()) {
+									for (Entity e : w.getEntities()) {
+										if (e instanceof Creature) {
+											Creature c = (Creature) e;
+											CreatureInfo cInfo = creaturesHandler
+													.get(w).get(
+															getCreatureType(e));
+											if (getCreatureType(e) != null) {
+												if (!cInfo.isEnabled()) {
+													c.setHealth(0);
 												} else {
-													c.setFireTicks(0);
+													if (cInfo.isBurn()) {
+														if (shouldBurn(c
+																.getLocation())) {
+															c.setFireTicks(20);
+														}
+													} else {
+														c.setFireTicks(0);
+													}
 												}
 											}
 										}
 									}
 								}
 							}
-						}
 					}
 				}, 0L, 1L);
 		getServer().getScheduler().scheduleSyncRepeatingTask(this,
 				new Runnable() {
 
 					public void run() {
-						for (Player p : getServer().getOnlinePlayers()) {
-							for (Entity e : p.getWorld().getEntities()) {
-								double deltax = Math.abs(e.getLocation().getX()
-										- p.getLocation().getX());
-								double deltay = Math.abs(e.getLocation().getY()
-										- p.getLocation().getY());
-								double deltaz = Math.abs(e.getLocation().getZ()
-										- p.getLocation().getZ());
-								double distance = Math
-										.sqrt((deltax * deltax)
-												+ (deltay * deltay)
-												+ (deltaz * deltaz));
-								CreatureType cType = getCreatureType(e);
-								if (cType != null) {
+						if (running)
+							for (Player p : getServer().getOnlinePlayers()) {
+								for (Entity e : p.getWorld().getEntities()) {
+									double deltax = Math.abs(e.getLocation()
+											.getX() - p.getLocation().getX());
+									double deltay = Math.abs(e.getLocation()
+											.getY() - p.getLocation().getY());
+									double deltaz = Math.abs(e.getLocation()
+											.getZ() - p.getLocation().getZ());
+									double distance = Math
+											.sqrt((deltax * deltax)
+													+ (deltay * deltay)
+													+ (deltaz * deltaz));
+									CreatureType cType = getCreatureType(e);
 									if (cType != null) {
-										CreatureInfo cInfo = creaturesHandler
-												.get(p.getWorld()).get(cType);
-										if (distance < 1.3) {
-											if (cInfo.getCreature() != CreatureType.SKELETON
-													|| cInfo.getCreature() != CreatureType.CREEPER
-													|| cInfo.getCreature() != CreatureType.GHAST) {
-												p.damage(cInfo
-														.getAttackDamage());
-											}
-										} else if (distance < 24) {
-											if (isDay(e.getWorld()))
-											{
-												if (cInfo.getNatureDay() == CreatureNature.AGGRESSIVE)
-												{
-													((Creature) e)
-															.setTarget((LivingEntity) p);
+										if (cType != null) {
+											CreatureInfo cInfo = creaturesHandler
+													.get(p.getWorld()).get(
+															cType);
+											if (distance < 1.3) {
+												if (cInfo.getCreature() != CreatureType.SKELETON
+														|| cInfo.getCreature() != CreatureType.CREEPER
+														|| cInfo.getCreature() != CreatureType.GHAST) {
+													p.damage(cInfo
+															.getAttackDamage());
 												}
-											}
-											else
-											{
-												if (cInfo.getNatureNight() == CreatureNature.AGGRESSIVE)
-												{
-													((Creature) e)
-															.setTarget((LivingEntity) p);
+											} else if (distance < 24) {
+												if (isDay(e.getWorld())) {
+													if (cInfo.getNatureDay() == CreatureNature.AGGRESSIVE) {
+														((Creature) e)
+																.setTarget((LivingEntity) p);
+													}
+												} else {
+													if (cInfo.getNatureNight() == CreatureNature.AGGRESSIVE) {
+														((Creature) e)
+																.setTarget((LivingEntity) p);
+													}
 												}
 											}
 										}
 									}
 								}
 							}
-						}
 					}
 				}, 0L, 10L);
 
+		this.running = true;
+		
 		log.info("[" + pdfFile.getName() + "] Version " + pdfFile.getVersion()
 				+ " is enabled!");
 	}
