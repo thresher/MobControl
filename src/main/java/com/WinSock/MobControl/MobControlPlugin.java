@@ -2,6 +2,7 @@ package com.WinSock.MobControl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -357,8 +358,7 @@ public class MobControlPlugin extends JavaPlugin {
 				this);
 		pm.registerEvent(Type.ENTITY_EXPLODE, entityListener, Priority.High,
 				this);
-		pm.registerEvent(Type.WORLD_LOAD, worldListener, Priority.Monitor,
-				this);
+		pm.registerEvent(Type.WORLD_LOAD, worldListener, Priority.Monitor, this);
 
 		// Scheduler
 		// Remove this until fully working
@@ -378,7 +378,7 @@ public class MobControlPlugin extends JavaPlugin {
 											CreatureInfo cInfo = creaturesHandler
 													.get(w).get(
 															getCreatureType(e));
-											if (getCreatureType(e) != null) {
+											if (cInfo != null) {
 												if (!cInfo.isEnabled()) {
 													c.setHealth(0);
 												} else {
@@ -397,7 +397,7 @@ public class MobControlPlugin extends JavaPlugin {
 								}
 							}
 					}
-				}, 0L, 1L);
+				}, 0L, 15L);
 		getServer().getScheduler().scheduleSyncRepeatingTask(this,
 				new Runnable() {
 
@@ -417,16 +417,34 @@ public class MobControlPlugin extends JavaPlugin {
 													+ (deltaz * deltaz));
 									CreatureType cType = getCreatureType(e);
 									if (cType != null) {
-										if (cType != null) {
-											CreatureInfo cInfo = creaturesHandler
-													.get(p.getWorld()).get(
-															cType);
-											if (distance < 1.3) {
-												if (cInfo.getCreature() != CreatureType.SKELETON
-														|| cInfo.getCreature() != CreatureType.CREEPER
-														|| cInfo.getCreature() != CreatureType.GHAST) {
-													p.damage(cInfo
-															.getAttackDamage());
+										CreatureInfo cInfo = creaturesHandler
+												.get(p.getWorld()).get(cType);
+										if (distance < 1.3) {
+											if (cInfo.getCreature() != CreatureType.SKELETON
+													|| cInfo.getCreature() != CreatureType.CREEPER
+													|| cInfo.getCreature() != CreatureType.GHAST) {
+												if (attacked.size() > 0) {
+													List<LivingEntity> entites = new ArrayList<LivingEntity>(
+															attacked.get((Creature) e));
+													if (entites
+															.contains((LivingEntity) p)) {
+														p.damage(cInfo
+																.getAttackDamage());
+													}
+												} else {
+													if (isDay(e.getWorld())) {
+														if (cInfo
+																.getNatureDay() == CreatureNature.AGGRESSIVE) {
+															p.damage(cInfo
+																	.getAttackDamage());
+														}
+													} else {
+														if (cInfo
+																.getNatureNight() == CreatureNature.AGGRESSIVE) {
+															p.damage(cInfo
+																	.getAttackDamage());
+														}
+													}
 												}
 											} else if (distance < 24) {
 												if (isDay(e.getWorld())) {
@@ -446,10 +464,10 @@ public class MobControlPlugin extends JavaPlugin {
 								}
 							}
 					}
-				}, 0L, 10L);
+				}, 0L, 20L);
 
 		this.running = true;
-		
+
 		log.info("[" + pdfFile.getName() + "] Version " + pdfFile.getVersion()
 				+ " is enabled!");
 	}

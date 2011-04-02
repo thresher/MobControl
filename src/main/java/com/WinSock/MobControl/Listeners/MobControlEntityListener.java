@@ -7,7 +7,6 @@ import java.util.List;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -48,7 +47,7 @@ public class MobControlEntityListener extends EntityListener {
 			if (cType != null) {
 				CreatureInfo cInfo = plugin.creaturesHandler.get(
 						event.getEntity().getWorld()).get(cType);
-				if (cInfo!= null && !cInfo.isBurn()) {
+				if (cInfo != null && !cInfo.isBurn()) {
 					event.setCancelled(true);
 				}
 			}
@@ -69,33 +68,44 @@ public class MobControlEntityListener extends EntityListener {
 						if (plugin.isDay(event.getEntity().getWorld())) {
 							if (plugin.shouldTarget(dmgByEntity.getEntity(),
 									cInfo.getNatureDay(), true)) {
-								Creature c = (Creature) dmgByEntity.getDamager();
+								Creature c = (Creature) dmgByEntity
+										.getDamager();
 								if (dmgByEntity.getEntity() instanceof LivingEntity) {
 									c.setTarget((LivingEntity) dmgByEntity
 											.getEntity());
 									if (plugin.attacked.containsKey(c)) {
 										List<LivingEntity> entites = new ArrayList<LivingEntity>(
 												plugin.attacked.get(c));
-										entites.add((LivingEntity) event
-												.getEntity());
+										if (!entites
+												.contains((LivingEntity) event
+														.getEntity())) {
+											entites.add((LivingEntity) event
+													.getEntity());
+										}
 										plugin.attacked.put(c, entites);
 									} else {
 										plugin.attacked.put(c, Arrays
 												.asList((LivingEntity) event
 														.getEntity()));
 									}
-									if (cInfo.getCreature() != CreatureType.SKELETON
-											|| cInfo.getCreature() != CreatureType.CREEPER
-											|| cInfo.getCreature() != CreatureType.GHAST) {
-										event.setCancelled(true);
+									if (event.getEntity() instanceof LivingEntity) {
+										LivingEntity e = (LivingEntity) event
+												.getEntity();
+										if (cInfo.getCreature() != CreatureType.SKELETON
+												|| cInfo.getCreature() != CreatureType.CREEPER
+												|| cInfo.getCreature() != CreatureType.GHAST) {
+											event.setCancelled(true);
+										} else {
+											e.damage(cInfo.getAttackDamage());
+										}
 									}
 								}
-	
 							}
 						} else {
 							if (plugin.shouldTarget(event.getEntity(),
 									cInfo.getNatureNight(), true)) {
-								Creature c = (Creature) dmgByEntity.getDamager();
+								Creature c = (Creature) dmgByEntity
+										.getDamager();
 								if (dmgByEntity.getDamager() instanceof LivingEntity) {
 									c.setTarget((LivingEntity) dmgByEntity
 											.getEntity());
@@ -110,18 +120,15 @@ public class MobControlEntityListener extends EntityListener {
 												.asList((LivingEntity) event
 														.getEntity()));
 									}
-									if (event.getEntity() instanceof Player) {
-										Player p = (Player) event.getEntity();
-	
-										if (cInfo.getCreature() == CreatureType.SKELETON
-												|| cInfo.getCreature() == CreatureType.GHAST
-												|| cInfo.getCreature() == CreatureType.CREEPER) {
-											p.damage(cInfo.getAttackDamage());
+									if (event.getEntity() instanceof LivingEntity) {
+										LivingEntity e = (LivingEntity) event
+												.getEntity();
+										if (cInfo.getCreature() != CreatureType.SKELETON
+												|| cInfo.getCreature() != CreatureType.CREEPER
+												|| cInfo.getCreature() != CreatureType.GHAST) {
+											event.setCancelled(true);
 										} else {
-											event.setCancelled(true); // Damage
-																		// handled
-																		// in other
-																		// areas
+											e.damage(cInfo.getAttackDamage());
 										}
 									}
 								}
@@ -145,10 +152,12 @@ public class MobControlEntityListener extends EntityListener {
 							|| event.getReason() == TargetReason.TARGET_DIED) {
 						if (event.getEntity() instanceof Creature) {
 							Creature c = (Creature) event.getEntity();
-							List<LivingEntity> entites = new ArrayList<LivingEntity>(
-									plugin.attacked.get(c));
-							entites.remove((LivingEntity) event.getTarget());
-							plugin.attacked.put(c, entites);
+							if (plugin.attacked.size() > 0) {
+								List<LivingEntity> entites = new ArrayList<LivingEntity>(
+										plugin.attacked.get(c));
+								entites.remove((LivingEntity) event.getTarget());
+								plugin.attacked.put(c, entites);
+							}
 						}
 					} else if (event.getReason() == TargetReason.TARGET_ATTACKED_ENTITY) {
 						if (event.getEntity() instanceof Creature) {
@@ -233,24 +242,22 @@ public class MobControlEntityListener extends EntityListener {
 								&& event.getTarget() instanceof LivingEntity) {
 							if (plugin.isDay(event.getEntity().getWorld())) {
 								Creature c = (Creature) event.getEntity();
-								if (!plugin
-										.shouldTarget(
-												event.getEntity(),
-												cInfo.getNatureDay(),
-												plugin.attacked.get(c).contains(
-														(LivingEntity) event
-																.getTarget()))) {
+								if (!plugin.shouldTarget(
+										event.getEntity(),
+										cInfo.getNatureDay(),
+										plugin.attacked.get(c).contains(
+												(LivingEntity) event
+														.getTarget()))) {
 									event.setCancelled(true);
 								}
 							} else {
 								Creature c = (Creature) event.getEntity();
-								if (!plugin
-										.shouldTarget(
-												event.getEntity(),
-												cInfo.getNatureNight(),
-												plugin.attacked.get(c).contains(
-														(LivingEntity) event
-																.getTarget()))) {
+								if (!plugin.shouldTarget(
+										event.getEntity(),
+										cInfo.getNatureNight(),
+										plugin.attacked.get(c).contains(
+												(LivingEntity) event
+														.getTarget()))) {
 									event.setCancelled(true);
 								}
 							}

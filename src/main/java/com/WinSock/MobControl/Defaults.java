@@ -109,11 +109,11 @@ public class Defaults {
 				CreatureNature.AGGRESSIVE, 5, 3, SpawnTime.BOTH, true,
 				Environment.NETHER);
 		defaults.put(ghast.getCreature(), ghast);
-		
-		CreatureInfo wolf = new CreatureInfo(CreatureType.WOLF, 
-				Material.GRASS, 0, 15, 0.5F, 0, 0, 2, false,
-				CreatureNature.NEUTRAL, CreatureNature.NEUTRAL, 10, 3,
-				SpawnTime.BOTH, true, Environment.NORMAL);
+
+		CreatureInfo wolf = new CreatureInfo(CreatureType.WOLF, Material.GRASS,
+				0, 15, 0.5F, 0, 0, 2, false, CreatureNature.NEUTRAL,
+				CreatureNature.NEUTRAL, 10, 3, SpawnTime.BOTH, true,
+				Environment.NORMAL);
 		defaults.put(wolf.getCreature(), wolf);
 	}
 
