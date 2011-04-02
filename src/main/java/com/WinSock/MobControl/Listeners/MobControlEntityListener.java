@@ -7,6 +7,7 @@ import java.util.List;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -60,7 +61,7 @@ public class MobControlEntityListener extends EntityListener {
 			if (event instanceof EntityDamageByEntityEvent) {
 				EntityDamageByEntityEvent dmgByEntity = (EntityDamageByEntityEvent) event;
 				CreatureType cType = plugin.getCreatureType(dmgByEntity
-						.getDamager());
+						.getEntity());
 				if (cType != null) {
 					CreatureInfo cInfo = plugin.creaturesHandler.get(
 							event.getEntity().getWorld()).get(cType);
@@ -68,19 +69,18 @@ public class MobControlEntityListener extends EntityListener {
 						if (plugin.isDay(event.getEntity().getWorld())) {
 							if (plugin.shouldTarget(dmgByEntity.getEntity(),
 									cInfo.getNatureDay(), true)) {
-								Creature c = (Creature) dmgByEntity
-										.getDamager();
-								if (dmgByEntity.getEntity() instanceof LivingEntity) {
+								if (dmgByEntity.getEntity() instanceof Creature) {
+									Creature c = (Creature) event.getEntity();
 									c.setTarget((LivingEntity) dmgByEntity
 											.getEntity());
 									if (plugin.attacked.containsKey(c)) {
 										List<LivingEntity> entites = new ArrayList<LivingEntity>(
 												plugin.attacked.get(c));
 										if (!entites
-												.contains((LivingEntity) event
-														.getEntity())) {
-											entites.add((LivingEntity) event
-													.getEntity());
+												.contains((LivingEntity) dmgByEntity
+														.getDamager())) {
+											entites.add((LivingEntity) dmgByEntity
+													.getDamager());
 										}
 										plugin.attacked.put(c, entites);
 									} else {
@@ -88,47 +88,63 @@ public class MobControlEntityListener extends EntityListener {
 												.asList((LivingEntity) event
 														.getEntity()));
 									}
-									if (event.getEntity() instanceof LivingEntity) {
+									if (dmgByEntity.getDamager() instanceof LivingEntity) {
 										LivingEntity e = (LivingEntity) event
 												.getEntity();
-										if (cInfo.getCreature() != CreatureType.SKELETON
-												|| cInfo.getCreature() != CreatureType.CREEPER
-												|| cInfo.getCreature() != CreatureType.GHAST) {
-											event.setCancelled(true);
-										} else {
-											e.damage(cInfo.getAttackDamage());
+										if (!(dmgByEntity.getDamager() instanceof Player)) {
+											CreatureType type = plugin
+													.getCreatureType(dmgByEntity
+															.getDamager());
+											if (type != null) {
+												if (type != CreatureType.SKELETON
+														|| type != CreatureType.CREEPER
+														|| type != CreatureType.GHAST) {
+													event.setCancelled(true);
+												} else {
+													e.damage(cInfo
+															.getAttackDamage());
+												}
+											}
 										}
 									}
 								}
 							}
 						} else {
-							if (plugin.shouldTarget(event.getEntity(),
-									cInfo.getNatureNight(), true)) {
-								Creature c = (Creature) dmgByEntity
-										.getDamager();
-								if (dmgByEntity.getDamager() instanceof LivingEntity) {
+							if (plugin.shouldTarget(dmgByEntity.getEntity(),
+									cInfo.getNatureDay(), true)) {
+								if (dmgByEntity.getEntity() instanceof Creature) {
+									Creature c = (Creature) event.getEntity();
 									c.setTarget((LivingEntity) dmgByEntity
 											.getEntity());
 									if (plugin.attacked.containsKey(c)) {
 										List<LivingEntity> entites = new ArrayList<LivingEntity>(
 												plugin.attacked.get(c));
-										entites.add((LivingEntity) event
-												.getEntity());
+										entites.add((LivingEntity) dmgByEntity
+												.getDamager());
 										plugin.attacked.put(c, entites);
 									} else {
-										plugin.attacked.put(c, Arrays
-												.asList((LivingEntity) event
-														.getEntity()));
+										plugin.attacked
+												.put(c,
+														Arrays.asList((LivingEntity) dmgByEntity
+																.getDamager()));
 									}
-									if (event.getEntity() instanceof LivingEntity) {
+									if (dmgByEntity.getDamager() instanceof LivingEntity) {
 										LivingEntity e = (LivingEntity) event
 												.getEntity();
-										if (cInfo.getCreature() != CreatureType.SKELETON
-												|| cInfo.getCreature() != CreatureType.CREEPER
-												|| cInfo.getCreature() != CreatureType.GHAST) {
-											event.setCancelled(true);
-										} else {
-											e.damage(cInfo.getAttackDamage());
+										if (!(dmgByEntity.getDamager() instanceof Player)) {
+											CreatureType type = plugin
+													.getCreatureType(dmgByEntity
+															.getDamager());
+											if (type != null) {
+												if (type != CreatureType.SKELETON
+														|| type != CreatureType.CREEPER
+														|| type != CreatureType.GHAST) {
+													event.setCancelled(true);
+												} else {
+													e.damage(cInfo
+															.getAttackDamage());
+												}
+											}
 										}
 									}
 								}

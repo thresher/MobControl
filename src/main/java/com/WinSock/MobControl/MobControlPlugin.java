@@ -44,7 +44,6 @@ import org.bukkit.util.config.Configuration;
 
 import com.WinSock.MobControl.Listeners.MobControlEntityListener;
 import com.WinSock.MobControl.Listeners.MobControlWorldListener;
-//import com.WinSock.MobControl.Spawner.SpawnerCreature;
 import com.WinSock.MobControl.Spawner.CreatureInfo;
 import com.WinSock.MobControl.Spawner.CreatureNature;
 import com.WinSock.MobControl.Spawner.Creatures;
@@ -63,7 +62,7 @@ public class MobControlPlugin extends JavaPlugin {
 	private Defaults defaults;
 	public CreaturesHandler creaturesHandler = new CreaturesHandler(this);
 
-	public Map<Creature, List<LivingEntity>> attacked = new HashMap<Creature, List<LivingEntity>>();
+	public Map<Creature, List<LivingEntity>> attacked;
 	public boolean running = false;
 
 	public void onDisable() {
@@ -339,6 +338,7 @@ public class MobControlPlugin extends JavaPlugin {
 	public void onEnable() {
 		pdfFile = this.getDescription();
 		log = Logger.getLogger("Minecraft");
+		attacked = new HashMap<Creature, List<LivingEntity>>();
 
 		// Load config file
 		loadSettings(this.getConfiguration());
@@ -360,11 +360,6 @@ public class MobControlPlugin extends JavaPlugin {
 				this);
 		pm.registerEvent(Type.WORLD_LOAD, worldListener, Priority.Monitor, this);
 
-		// Scheduler
-		// Remove this until fully working
-		// this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new
-		// SpawnerCreature(this, creatures), 0L,
-		// (long)creatures.getSpawnDelay());
 		getServer().getScheduler().scheduleSyncRepeatingTask(this,
 				new Runnable() {
 
@@ -419,11 +414,12 @@ public class MobControlPlugin extends JavaPlugin {
 									if (cType != null) {
 										CreatureInfo cInfo = creaturesHandler
 												.get(p.getWorld()).get(cType);
-										if (distance < 1.3) {
+										if (distance < 1.5) {
 											if (cInfo.getCreature() != CreatureType.SKELETON
 													|| cInfo.getCreature() != CreatureType.CREEPER
 													|| cInfo.getCreature() != CreatureType.GHAST) {
-												if (attacked.size() > 0) {
+												if (attacked != null && attacked.size() > 0
+														&& e instanceof Creature) {
 													List<LivingEntity> entites = new ArrayList<LivingEntity>(
 															attacked.get((Creature) e));
 													if (entites
