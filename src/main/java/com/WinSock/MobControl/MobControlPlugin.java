@@ -353,11 +353,11 @@ public class MobControlPlugin extends JavaPlugin {
 				this);
 		pm.registerEvent(Type.ENTITY_DEATH, entityListener, Priority.Monitor,
 				this);
-		pm.registerEvent(Type.ENTITY_DAMAGED, entityListener, Priority.High,
+		pm.registerEvent(Type.ENTITY_DAMAGE, entityListener, Priority.High,
 				this);
 		pm.registerEvent(Type.ENTITY_EXPLODE, entityListener, Priority.High,
 				this);
-		pm.registerEvent(Type.WORLD_LOADED, worldListener, Priority.Monitor,
+		pm.registerEvent(Type.WORLD_LOAD, worldListener, Priority.Monitor,
 				this);
 
 		// Scheduler

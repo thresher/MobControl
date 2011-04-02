@@ -48,7 +48,7 @@ public class MobControlEntityListener extends EntityListener {
 			if (cType != null) {
 				CreatureInfo cInfo = plugin.creaturesHandler.get(
 						event.getEntity().getWorld()).get(cType);
-				if (!cInfo.isBurn()) {
+				if (cInfo!= null && !cInfo.isBurn()) {
 					event.setCancelled(true);
 				}
 			}
@@ -65,62 +65,64 @@ public class MobControlEntityListener extends EntityListener {
 				if (cType != null) {
 					CreatureInfo cInfo = plugin.creaturesHandler.get(
 							event.getEntity().getWorld()).get(cType);
-					if (plugin.isDay(event.getEntity().getWorld())) {
-						if (plugin.shouldTarget(dmgByEntity.getEntity(),
-								cInfo.getNatureDay(), true)) {
-							Creature c = (Creature) dmgByEntity.getDamager();
-							if (dmgByEntity.getEntity() instanceof LivingEntity) {
-								c.setTarget((LivingEntity) dmgByEntity
-										.getEntity());
-								if (plugin.attacked.containsKey(c)) {
-									List<LivingEntity> entites = new ArrayList<LivingEntity>(
-											plugin.attacked.get(c));
-									entites.add((LivingEntity) event
+					if (cInfo != null) {
+						if (plugin.isDay(event.getEntity().getWorld())) {
+							if (plugin.shouldTarget(dmgByEntity.getEntity(),
+									cInfo.getNatureDay(), true)) {
+								Creature c = (Creature) dmgByEntity.getDamager();
+								if (dmgByEntity.getEntity() instanceof LivingEntity) {
+									c.setTarget((LivingEntity) dmgByEntity
 											.getEntity());
-									plugin.attacked.put(c, entites);
-								} else {
-									plugin.attacked.put(c, Arrays
-											.asList((LivingEntity) event
-													.getEntity()));
-								}
-								if (cInfo.getCreature() != CreatureType.SKELETON
-										|| cInfo.getCreature() != CreatureType.CREEPER
-										|| cInfo.getCreature() != CreatureType.GHAST) {
-									event.setCancelled(true);
-								}
-							}
-
-						}
-					} else {
-						if (plugin.shouldTarget(event.getEntity(),
-								cInfo.getNatureNight(), true)) {
-							Creature c = (Creature) dmgByEntity.getDamager();
-							if (dmgByEntity.getDamager() instanceof LivingEntity) {
-								c.setTarget((LivingEntity) dmgByEntity
-										.getEntity());
-								if (plugin.attacked.containsKey(c)) {
-									List<LivingEntity> entites = new ArrayList<LivingEntity>(
-											plugin.attacked.get(c));
-									entites.add((LivingEntity) event
-											.getEntity());
-									plugin.attacked.put(c, entites);
-								} else {
-									plugin.attacked.put(c, Arrays
-											.asList((LivingEntity) event
-													.getEntity()));
-								}
-								if (event.getEntity() instanceof Player) {
-									Player p = (Player) event.getEntity();
-
-									if (cInfo.getCreature() == CreatureType.SKELETON
-											|| cInfo.getCreature() == CreatureType.GHAST
-											|| cInfo.getCreature() == CreatureType.CREEPER) {
-										p.damage(cInfo.getAttackDamage());
+									if (plugin.attacked.containsKey(c)) {
+										List<LivingEntity> entites = new ArrayList<LivingEntity>(
+												plugin.attacked.get(c));
+										entites.add((LivingEntity) event
+												.getEntity());
+										plugin.attacked.put(c, entites);
 									} else {
-										event.setCancelled(true); // Damage
-																	// handled
-																	// in other
-																	// areas
+										plugin.attacked.put(c, Arrays
+												.asList((LivingEntity) event
+														.getEntity()));
+									}
+									if (cInfo.getCreature() != CreatureType.SKELETON
+											|| cInfo.getCreature() != CreatureType.CREEPER
+											|| cInfo.getCreature() != CreatureType.GHAST) {
+										event.setCancelled(true);
+									}
+								}
+	
+							}
+						} else {
+							if (plugin.shouldTarget(event.getEntity(),
+									cInfo.getNatureNight(), true)) {
+								Creature c = (Creature) dmgByEntity.getDamager();
+								if (dmgByEntity.getDamager() instanceof LivingEntity) {
+									c.setTarget((LivingEntity) dmgByEntity
+											.getEntity());
+									if (plugin.attacked.containsKey(c)) {
+										List<LivingEntity> entites = new ArrayList<LivingEntity>(
+												plugin.attacked.get(c));
+										entites.add((LivingEntity) event
+												.getEntity());
+										plugin.attacked.put(c, entites);
+									} else {
+										plugin.attacked.put(c, Arrays
+												.asList((LivingEntity) event
+														.getEntity()));
+									}
+									if (event.getEntity() instanceof Player) {
+										Player p = (Player) event.getEntity();
+	
+										if (cInfo.getCreature() == CreatureType.SKELETON
+												|| cInfo.getCreature() == CreatureType.GHAST
+												|| cInfo.getCreature() == CreatureType.CREEPER) {
+											p.damage(cInfo.getAttackDamage());
+										} else {
+											event.setCancelled(true); // Damage
+																		// handled
+																		// in other
+																		// areas
+										}
 									}
 								}
 							}
@@ -138,117 +140,119 @@ public class MobControlEntityListener extends EntityListener {
 			if (cType != null) {
 				CreatureInfo cInfo = plugin.creaturesHandler.get(
 						event.getEntity().getWorld()).get(cType);
-				if (event.getReason() == TargetReason.FORGOT_TARGET
-						|| event.getReason() == TargetReason.TARGET_DIED) {
-					if (event.getEntity() instanceof Creature) {
-						Creature c = (Creature) event.getEntity();
-						List<LivingEntity> entites = new ArrayList<LivingEntity>(
-								plugin.attacked.get(c));
-						entites.remove((LivingEntity) event.getTarget());
-						plugin.attacked.put(c, entites);
-					}
-				} else if (event.getReason() == TargetReason.TARGET_ATTACKED_ENTITY) {
-					if (event.getEntity() instanceof Creature) {
-						Creature c = (Creature) event.getEntity();
-						if (plugin.isDay(event.getEntity().getWorld())) {
-							if (plugin.shouldTarget(event.getEntity(),
-									cInfo.getNatureDay(), true)) {
-								if (plugin.attacked.containsKey(c)) {
-									List<LivingEntity> entites = new ArrayList<LivingEntity>(
-											plugin.attacked.get(c));
-									entites.add((LivingEntity) event
-											.getEntity());
-									plugin.attacked.put(c, entites);
+				if (cInfo != null) {
+					if (event.getReason() == TargetReason.FORGOT_TARGET
+							|| event.getReason() == TargetReason.TARGET_DIED) {
+						if (event.getEntity() instanceof Creature) {
+							Creature c = (Creature) event.getEntity();
+							List<LivingEntity> entites = new ArrayList<LivingEntity>(
+									plugin.attacked.get(c));
+							entites.remove((LivingEntity) event.getTarget());
+							plugin.attacked.put(c, entites);
+						}
+					} else if (event.getReason() == TargetReason.TARGET_ATTACKED_ENTITY) {
+						if (event.getEntity() instanceof Creature) {
+							Creature c = (Creature) event.getEntity();
+							if (plugin.isDay(event.getEntity().getWorld())) {
+								if (plugin.shouldTarget(event.getEntity(),
+										cInfo.getNatureDay(), true)) {
+									if (plugin.attacked.containsKey(c)) {
+										List<LivingEntity> entites = new ArrayList<LivingEntity>(
+												plugin.attacked.get(c));
+										entites.add((LivingEntity) event
+												.getEntity());
+										plugin.attacked.put(c, entites);
+									} else {
+										plugin.attacked.put(c, Arrays
+												.asList((LivingEntity) event
+														.getEntity()));
+									}
 								} else {
-									plugin.attacked.put(c, Arrays
-											.asList((LivingEntity) event
-													.getEntity()));
+									event.setCancelled(true);
 								}
 							} else {
-								event.setCancelled(true);
-							}
-						} else {
-							if (plugin.shouldTarget(event.getEntity(),
-									cInfo.getNatureNight(), true)) {
-								if (plugin.attacked.containsKey(c)) {
-									List<LivingEntity> entites = new ArrayList<LivingEntity>(
-											plugin.attacked.get(c));
-									entites.add((LivingEntity) event
-											.getEntity());
-									plugin.attacked.put(c, entites);
+								if (plugin.shouldTarget(event.getEntity(),
+										cInfo.getNatureNight(), true)) {
+									if (plugin.attacked.containsKey(c)) {
+										List<LivingEntity> entites = new ArrayList<LivingEntity>(
+												plugin.attacked.get(c));
+										entites.add((LivingEntity) event
+												.getEntity());
+										plugin.attacked.put(c, entites);
+									} else {
+										plugin.attacked.put(c, Arrays
+												.asList((LivingEntity) event
+														.getEntity()));
+									}
 								} else {
-									plugin.attacked.put(c, Arrays
-											.asList((LivingEntity) event
-													.getEntity()));
+									event.setCancelled(true);
 								}
-							} else {
-								event.setCancelled(true);
 							}
 						}
-					}
-				} else if (event.getReason() == TargetReason.CUSTOM) {
-					if (event.getEntity() instanceof Creature) {
-						Creature c = (Creature) event.getEntity();
-						if (plugin.isDay(event.getEntity().getWorld())) {
-							if (plugin.shouldTarget(event.getEntity(),
-									cInfo.getNatureDay(), false)) {
-								if (plugin.attacked.containsKey(c)) {
-									List<LivingEntity> entites = new ArrayList<LivingEntity>(
-											plugin.attacked.get(c));
-									entites.add((LivingEntity) event
-											.getEntity());
-									plugin.attacked.put(c, entites);
+					} else if (event.getReason() == TargetReason.CUSTOM) {
+						if (event.getEntity() instanceof Creature) {
+							Creature c = (Creature) event.getEntity();
+							if (plugin.isDay(event.getEntity().getWorld())) {
+								if (plugin.shouldTarget(event.getEntity(),
+										cInfo.getNatureDay(), false)) {
+									if (plugin.attacked.containsKey(c)) {
+										List<LivingEntity> entites = new ArrayList<LivingEntity>(
+												plugin.attacked.get(c));
+										entites.add((LivingEntity) event
+												.getEntity());
+										plugin.attacked.put(c, entites);
+									} else {
+										plugin.attacked.put(c, Arrays
+												.asList((LivingEntity) event
+														.getEntity()));
+									}
 								} else {
-									plugin.attacked.put(c, Arrays
-											.asList((LivingEntity) event
-													.getEntity()));
+									event.setCancelled(true);
 								}
 							} else {
-								event.setCancelled(true);
-							}
-						} else {
-							if (plugin.shouldTarget(event.getEntity(),
-									cInfo.getNatureNight(), false)) {
-								if (plugin.attacked.containsKey(c)) {
-									List<LivingEntity> entites = new ArrayList<LivingEntity>(
-											plugin.attacked.get(c));
-									entites.add((LivingEntity) event
-											.getEntity());
-									plugin.attacked.put(c, entites);
+								if (plugin.shouldTarget(event.getEntity(),
+										cInfo.getNatureNight(), false)) {
+									if (plugin.attacked.containsKey(c)) {
+										List<LivingEntity> entites = new ArrayList<LivingEntity>(
+												plugin.attacked.get(c));
+										entites.add((LivingEntity) event
+												.getEntity());
+										plugin.attacked.put(c, entites);
+									} else {
+										plugin.attacked.put(c, Arrays
+												.asList((LivingEntity) event
+														.getEntity()));
+									}
 								} else {
-									plugin.attacked.put(c, Arrays
-											.asList((LivingEntity) event
-													.getEntity()));
+									event.setCancelled(true);
 								}
-							} else {
-								event.setCancelled(true);
 							}
 						}
-					}
-				} else if (event.getReason() != TargetReason.CUSTOM) {
-					if (cType != null
-							&& event.getTarget() instanceof LivingEntity) {
-						if (plugin.isDay(event.getEntity().getWorld())) {
-							Creature c = (Creature) event.getEntity();
-							if (!plugin
-									.shouldTarget(
-											event.getEntity(),
-											cInfo.getNatureDay(),
-											plugin.attacked.get(c).contains(
-													(LivingEntity) event
-															.getTarget()))) {
-								event.setCancelled(true);
-							}
-						} else {
-							Creature c = (Creature) event.getEntity();
-							if (!plugin
-									.shouldTarget(
-											event.getEntity(),
-											cInfo.getNatureNight(),
-											plugin.attacked.get(c).contains(
-													(LivingEntity) event
-															.getTarget()))) {
-								event.setCancelled(true);
+					} else if (event.getReason() != TargetReason.CUSTOM) {
+						if (cType != null
+								&& event.getTarget() instanceof LivingEntity) {
+							if (plugin.isDay(event.getEntity().getWorld())) {
+								Creature c = (Creature) event.getEntity();
+								if (!plugin
+										.shouldTarget(
+												event.getEntity(),
+												cInfo.getNatureDay(),
+												plugin.attacked.get(c).contains(
+														(LivingEntity) event
+																.getTarget()))) {
+									event.setCancelled(true);
+								}
+							} else {
+								Creature c = (Creature) event.getEntity();
+								if (!plugin
+										.shouldTarget(
+												event.getEntity(),
+												cInfo.getNatureNight(),
+												plugin.attacked.get(c).contains(
+														(LivingEntity) event
+																.getTarget()))) {
+									event.setCancelled(true);
+								}
 							}
 						}
 					}
@@ -264,7 +268,7 @@ public class MobControlEntityListener extends EntityListener {
 			if (cType != null) {
 				CreatureInfo cInfo = plugin.creaturesHandler.get(
 						event.getEntity().getWorld()).get(cType);
-				if (cType == CreatureType.CREEPER) {
+				if (cInfo != null && cType == CreatureType.CREEPER) {
 					if (plugin.isDay(event.getEntity().getWorld())) {
 						if (cInfo.getNatureDay() == CreatureNature.PASSIVE) {
 							event.setCancelled(true);
@@ -286,8 +290,10 @@ public class MobControlEntityListener extends EntityListener {
 			if (cType != null) {
 				CreatureInfo cInfo = plugin.creaturesHandler.get(
 						event.getEntity().getWorld()).get(cType);
-				if (!plugin.canSpawn(event.getLocation(), cInfo, 100)) {
-					event.setCancelled(true);
+				if (cInfo != null) {
+					if (!plugin.canSpawn(event.getLocation(), cInfo, 100)) {
+						event.setCancelled(true);
+					}
 				}
 			}
 		}
